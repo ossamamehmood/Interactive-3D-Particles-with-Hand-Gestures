@@ -18,7 +18,7 @@
   <h3>
     <a href="https://holoflux-gesture-engine.vercel.app/">🔴 LIVE DEMO</a>
     <span> | </span>
-    <a href="https://github.com/YOUR-USERNAME/holoflux-gesture-engine/issues">🐛 Report Bug</a>
+    <a href="https://github.com/ossamamehmood/holoflux-gesture-engine/issues">🐛 Report Bug</a>
   </h3>
 </div>
 
