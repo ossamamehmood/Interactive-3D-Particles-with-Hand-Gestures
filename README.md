@@ -12,9 +12,6 @@
 
   <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDdtY3h6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6&ep=v1_gifs_search&rid=giphy.gif" alt="Demo GIF" width="100%" style="border-radius: 10px; box-shadow: 0 0 20px rgba(0,255,255,0.2);">
 
-  <br />
-  <br />
-
   <h3>
     <a href="https://holoflux-gesture-engine.vercel.app/">🔴 LIVE DEMO</a>
     <span> | </span>
