@@ -1,510 +1,66 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Particle Core - Final</title>
-    <style>
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; user-select: none; }
-        
-        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
-        
-        /* HUD */
-        #video-container {
-            position: absolute; bottom: 20px; right: 20px; 
-            width: 240px; height: 180px; 
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 10px; overflow: hidden; z-index: 20;
-            background: rgba(0,0,0,0.8);
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
-            opacity: 0; transition: opacity 0.5s;
-        }
-        
-        #video-feed {
-            width: 100%; height: 100%; object-fit: cover;
-            transform: scaleX(-1); opacity: 0.6;
-        }
+<div align="center">
 
-        #gesture-label {
-            position: absolute; top: 10px; left: 10px;
-            color: cyan; font-size: 14px; font-weight: bold; text-transform: uppercase;
-            text-shadow: 0 0 8px cyan; background: rgba(0,0,0,0.5);
-            padding: 2px 8px; border-radius: 4px;
-        }
+  # ⚛️ HOLOFLUX
+  **The "Minority Report" Interface for the Web**
 
-        /* START SCREEN */
-        #intro-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
-            z-index: 100; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; color: white;
-        }
-        
-        h1 { font-weight: 200; letter-spacing: 8px; margin-bottom: 5px; text-transform: uppercase; text-shadow: 0 0 20px rgba(255,255,255,0.5); }
-        
-        #start-btn {
-            background: transparent; color: cyan; border: 1px solid cyan;
-            padding: 15px 50px; font-size: 16px; letter-spacing: 4px;
-            text-transform: uppercase; cursor: pointer; transition: 0.3s;
-            margin-top: 30px;
-        }
-        #start-btn:hover { background: cyan; color: black; box-shadow: 0 0 40px cyan; }
+  [![Three.js](https://img.shields.io/badge/Three.js-Black?style=for-the-badge&logo=three.js&logoColor=white)](https://threejs.org/)
+  [![MediaPipe](https://img.shields.io/badge/MediaPipe-Vision-00aabb?style=for-the-badge&logo=google&logoColor=white)](https://developers.google.com/mediapipe)
+  [![WebGL](https://img.shields.io/badge/WebGL-GLSL-red?style=for-the-badge&logo=opengl&logoColor=white)](https://get.webgl.org/)
+  [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-        /* INSTRUCTIONS */
-        #cheat-sheet {
-            position: absolute; top: 20px; right: 20px; text-align: right;
-            color: rgba(255,255,255,0.4); font-size: 12px; line-height: 1.8;
-            pointer-events: none; z-index: 5;
-        }
-        b { color: white; }
+  <br />
 
-        /* UI BUTTONS */
-        #ui-layer {
-            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-            z-index: 10; display: flex; gap: 10px;
-        }
-        button.nav-btn {
-            background: rgba(255,255,255,0.1); border: none; color: white;
-            padding: 8px 16px; border-radius: 20px; cursor: pointer;
-            font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
-            transition: 0.2s;
-        }
-        button.nav-btn.active { background: white; color: black; }
-    </style>
-</head>
-<body>
+  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDdtY3h6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6&ep=v1_gifs_search&rid=giphy.gif" alt="Demo GIF" width="100%" style="border-radius: 10px; box-shadow: 0 0 20px rgba(0,255,255,0.2);">
 
-    <div id="intro-screen">
-        <h1>Particle Core</h1>
-        <p style="opacity: 0.7; letter-spacing: 1px;">GESTURE CONTROL SYSTEM</p>
-        <button id="start-btn">Initialize</button>
-    </div>
+  <br />
+  <br />
 
-    <div id="cheat-sheet">
-        🖐️ <b>PALM:</b> Explode<br>
-        ✊ <b>FIST:</b> Implode<br>
-        👌 <b>PINCH:</b> Time Freeze<br>
-        ✌️ <b>PEACE:</b> Next Shape
-    </div>
+  <h3>
+    <a href="https://YOUR-VERCEL-URL.vercel.app">🔴 LIVE DEMO</a>
+    <span> | </span>
+    <a href="https://github.com/YOUR-USERNAME/holoflux-gesture-engine/issues">🐛 Report Bug</a>
+  </h3>
+</div>
 
-    <div id="video-container">
-        <video id="video-feed" playsinline muted autoplay></video>
-        <div id="gesture-label">System Standby</div>
-    </div>
+---
 
-    <div id="canvas-container"></div>
-    
-    <div id="ui-layer">
-        <button class="nav-btn active" id="btn-sphere">Sphere</button>
-        <button class="nav-btn" id="btn-heart">Heart</button>
-        <button class="nav-btn" id="btn-saturn">Saturn</button>
-        <button class="nav-btn" id="btn-spiral">Galaxy</button>
-    </div>
+## 🔮 What is Holoflux?
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-                "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3"
-            }
-        }
-    </script>
+**Holoflux** is an experimental WebGL interface that bridges the gap between **Computer Vision** and **High-Performance Graphics**. 
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-        import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
-        import { gsap } from 'https://cdn.skypack.dev/gsap';
+It renders **55,000 interactive particles** that react to your physical hand movements in real-time. By combining Google's MediaPipe (for skeletal tracking) with custom GLSL Shaders (for physics), Holoflux achieves a "God Mode" experience where you can physically grasp, explode, and freeze digital matter directly in your browser.
 
-        // --- SETUP ---
-        let handLandmarker;
-        const video = document.getElementById("video-feed");
-        const gestureLabel = document.getElementById("gesture-label");
-        let lastGestureTime = 0; 
-        let timeSpeed = 1.0; // For time freeze effect
+> **"Any sufficiently advanced technology is indistinguishable from magic."** — *Arthur C. Clarke*
 
-        // --- THREE.JS ---
-        const PARTICLE_COUNT = 55000;
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.z = 30;
+## ✨ Features
 
-        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
+* **🧠 AI Skeletal Tracking:** Zero-latency hand recognition using MediaPipe.
+* **⚡ 55k+ GPU Particles:** A custom Vertex Shader handles millions of physics calculations per frame with zero CPU lag.
+* **🕸️ State Machine Engine:** Intelligently distinguishes between complex gestures (Pinch vs. Fist vs. Palm).
+* **🌑 Low-Light Capable:** Uses Lerp (Linear Interpolation) smoothing algorithms to filter out webcam noise in dark environments.
+* **💎 Cinematic Post-Processing:** Integrated UnrealBloomPass for that neon, sci-fi aesthetic.
 
-        // Tracker Ring
-        const cursorMesh = new THREE.Mesh(
-            new THREE.RingGeometry(0.4, 0.5, 32),
-            new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8, side: THREE.DoubleSide })
-        );
-        scene.add(cursorMesh);
+---
 
-        // Post Process
-        const renderScene = new RenderPass(scene, camera);
-        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-        bloomPass.threshold = 0; bloomPass.strength = 1.4; bloomPass.radius = 0.5;
-        const composer = new EffectComposer(renderer);
-        composer.addPass(renderScene); composer.addPass(bloomPass);
+## 🖐️ The Gesture Guide
 
-        // --- SHADER (ENHANCED PHYSICS) ---
-        const vertexShader = `
-            uniform float uTime;
-            uniform float uMorph;
-            uniform vec3 uMouse;
-            uniform float uInteractType; // 0=None, 1=Attract, 2=Repel, 3=Standard, 4=Freeze
-            uniform float uSpeed; 
+This system uses a custom **"Iron Man"** interaction model. Use these hand signs to control the physics engine:
 
-            attribute vec3 positionTarget;
-            attribute float sizeRandom;
-            
-            varying vec3 vColor;
-            
-            // Noise
-            vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-            vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-            vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
-            vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
-            float snoise(vec3 v) {
-                const vec2 C = vec2(1.0/6.0, 1.0/3.0);
-                const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
-                vec3 i = floor(v + dot(v, C.yyy));
-                vec3 x0 = v - i + dot(i, C.xxx);
-                vec3 g = step(x0.yzx, x0.xyz);
-                vec3 l = 1.0 - g;
-                vec3 i1 = min(g.xyz, l.zxy);
-                vec3 i2 = max(g.xyz, l.zxy);
-                vec3 x1 = x0 - i1 + C.xxx;
-                vec3 x2 = x0 - i2 + C.yyy;
-                vec3 x3 = x0 - D.yyy;
-                i = mod289(i);
-                vec4 p = permute(permute(permute(i.z + vec4(0.0, i1.z, i2.z, 1.0)) + i.y + vec4(0.0, i1.y, i2.y, 1.0)) + i.x + vec4(0.0, i1.x, i2.x, 1.0));
-                float n_ = 0.142857142857;
-                vec3 ns = n_ * D.wyz - D.xzx;
-                vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
-                vec4 x_ = floor(j * ns.z);
-                vec4 y_ = floor(j - 7.0 * x_);
-                vec4 x = x_ * ns.x + ns.yyyy;
-                vec4 y = y_ * ns.x + ns.yyyy;
-                vec4 h = 1.0 - abs(x) - abs(y);
-                vec4 b0 = vec4(x.xy, y.xy);
-                vec4 b1 = vec4(x.zw, y.zw);
-                vec4 s0 = floor(b0) * 2.0 + 1.0;
-                vec4 s1 = floor(b1) * 2.0 + 1.0;
-                vec4 sh = -step(h, vec4(0.0));
-                vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
-                vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
-                vec3 p0 = vec3(a0.xy, h.x);
-                vec3 p1 = vec3(a0.zw, h.y);
-                vec3 p2 = vec3(a1.xy, h.z);
-                vec3 p3 = vec3(a1.zw, h.w);
-                vec4 norm = taylorInvSqrt(vec4(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));
-                p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
-                vec4 m = max(0.6 - vec4(dot(x0, x0), dot(x1, x1), dot(x2, x2), dot(x3, x3)), 0.0);
-                m = m * m;
-                return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
-            }
+| Gesture | Action | Visual Effect |
+| :--- | :--- | :--- |
+| **🖐️ Open Palm** | **EXPLODE** | A violent shockwave scatters particles outward with turbulence noise. |
+| **✊ Closed Fist** | **IMPLODE** | Generates a massive gravity well (Black Hole) that reconstructs the shape. |
+| **👌 Pinch** | **FREEZE** | **"Matrix Mode."** Instantly stops time and freezes particles in mid-air. |
+| **✌️ Peace Sign** | **MORPH** | Cycles the geometry: `Sphere` → `Heart` → `Saturn` → `Galaxy`. |
+| **☝️ Point** | **SWIRL** | Standard interaction. Gently displace particles like water. |
 
-            void main() {
-                // Base Morph
-                vec3 pos = mix(position, positionTarget, uMorph);
-                
-                // Breathing noise
-                float noiseVal = snoise(pos * 0.1 + uTime * 0.2 * uSpeed);
-                pos += normal * noiseVal * 0.3;
+---
 
-                // Physics
-                float dist = distance(pos, uMouse);
-                vec3 dir = normalize(pos - uMouse);
-                
-                if (uInteractType == 2.0) { 
-                    // 🖐️ EXPLODE (Violent)
-                    if (dist < 25.0) {
-                        float force = (25.0 - dist) * 2.5; 
-                        // Add turbulence
-                        float turbulence = snoise(pos * 0.5 + uTime * 5.0) * 2.0;
-                        pos += dir * force + vec3(turbulence); 
-                    }
-                } else if (uInteractType == 1.0) {
-                     // ✊ IMPLODE (Black Hole)
-                     if (dist < 35.0) {
-                        // Strong pull
-                        pos -= dir * (dist * 0.9); 
-                     }
-                } else if (uInteractType == 3.0) {
-                    // ☝️ POINT (Swirl)
-                    if (dist < 6.0) {
-                        pos += dir * (6.0 - dist) * 1.5;
-                    }
-                } else if (uInteractType == 4.0) {
-                    // 👌 FREEZE (Stop physics, just minor vibration)
-                    // Do nothing here, uSpeed handles the noise freeze
-                }
+## 🚀 Quick Start
 
-                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                gl_Position = projectionMatrix * mvPosition;
-                gl_PointSize = (160.0 * sizeRandom) / -mvPosition.z;
-                
-                // Color Logic
-                float cNoise = snoise(pos * 0.05 + uTime * 0.5 * uSpeed);
-                vec3 colorA = vec3(0.0, 1.0, 1.0); // Cyan
-                vec3 colorB = vec3(1.0, 0.0, 0.8); // Magenta
-                vColor = mix(colorA, colorB, cNoise + 0.5);
-                
-                // Hot color for explosion
-                if(uInteractType == 2.0 && dist < 15.0) vColor = vec3(1.0, 1.0, 0.5);
-                // Ice color for freeze
-                if(uInteractType == 4.0) vColor = mix(vColor, vec3(0.5, 0.8, 1.0), 0.7);
-            }
-        `;
+This project is built as a **Single File Experience** to demonstrate the power of raw WebGL without build-step complexity.
 
-        const fragmentShader = `
-            varying vec3 vColor;
-            void main() {
-                float r = distance(gl_PointCoord, vec2(0.5));
-                if (r > 0.5) discard;
-                float glow = 1.0 - (r * 2.0);
-                glow = pow(glow, 2.0);
-                gl_FragColor = vec4(vColor, glow);
-            }
-        `;
-
-        // Particles
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(PARTICLE_COUNT * 3);
-        const targets = new Float32Array(PARTICLE_COUNT * 3);
-        const randoms = new Float32Array(PARTICLE_COUNT);
-
-        function getSphere(r) {
-            const u = Math.random(), v = Math.random();
-            const theta = 2 * Math.PI * u, phi = Math.acos(2 * v - 1);
-            return { x: r*Math.sin(phi)*Math.cos(theta), y: r*Math.sin(phi)*Math.sin(theta), z: r*Math.cos(phi) };
-        }
-
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
-            const p = getSphere(12);
-            positions[i*3]=targets[i*3]=p.x;
-            positions[i*3+1]=targets[i*3+1]=p.y;
-            positions[i*3+2]=targets[i*3+2]=p.z;
-            randoms[i] = Math.random();
-        }
-
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('positionTarget', new THREE.BufferAttribute(targets, 3));
-        geometry.setAttribute('sizeRandom', new THREE.BufferAttribute(randoms, 1));
-
-        const material = new THREE.ShaderMaterial({
-            vertexShader, fragmentShader,
-            uniforms: {
-                uTime: { value: 0 },
-                uMorph: { value: 0 },
-                uMouse: { value: new THREE.Vector3(999,999,999) },
-                uInteractType: { value: 0.0 },
-                uSpeed: { value: 1.0 }
-            },
-            transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
-        });
-
-        const particles = new THREE.Points(geometry, material);
-        scene.add(particles);
-
-        // --- SHAPES ---
-        const shapes = {
-            sphere: () => {
-                const a = new Float32Array(PARTICLE_COUNT*3);
-                for(let i=0;i<PARTICLE_COUNT;i++) { const p=getSphere(12); a[i*3]=p.x;a[i*3+1]=p.y;a[i*3+2]=p.z; } return a;
-            },
-            heart: () => {
-                const a = new Float32Array(PARTICLE_COUNT*3);
-                for(let i=0;i<PARTICLE_COUNT;i++) {
-                    let t=Math.random()*Math.PI*2, s=Math.pow(Math.random(),0.33)*0.8;
-                    let x=16*Math.pow(Math.sin(t),3), y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
-                    a[i*3]=x*s; a[i*3+1]=y*s; a[i*3+2]=(Math.random()-0.5)*5;
-                } return a;
-            },
-            saturn: () => {
-                const a = new Float32Array(PARTICLE_COUNT*3);
-                for(let i=0;i<PARTICLE_COUNT;i++){
-                    if(i<PARTICLE_COUNT*0.6){ const p=getSphere(8); a[i*3]=p.x;a[i*3+1]=p.y;a[i*3+2]=p.z; }
-                    else {
-                        const t=Math.random()*Math.PI*2, r=12+Math.random()*10;
-                        let x=r*Math.cos(t), z=r*Math.sin(t);
-                        a[i*3]=x; a[i*3+1]=x*Math.sin(0.3)-z*Math.cos(0.3); a[i*3+2]=x*Math.cos(0.3)+z*Math.sin(0.3);
-                    }
-                } return a;
-            },
-            spiral: () => {
-                const a = new Float32Array(PARTICLE_COUNT*3);
-                for(let i=0;i<PARTICLE_COUNT;i++){
-                    const ang=i*0.005, r=i*0.0005*20;
-                    a[i*3]=r*Math.cos(ang); a[i*3+1]=(Math.random()-0.5)*5; a[i*3+2]=r*Math.sin(ang);
-                } return a;
-            }
-        };
-        const shapeKeys = Object.keys(shapes);
-        let currentShapeIndex = 0;
-
-        function switchShape(name) {
-            geometry.attributes.positionTarget.set(shapes[name]());
-            geometry.attributes.positionTarget.needsUpdate = true;
-            gsap.fromTo(material.uniforms.uMorph, {value: 0}, {value: 1, duration: 2});
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            const btn = document.getElementById('btn-'+name);
-            if(btn) btn.classList.add('active');
-        }
-
-        // --- 2. ADVANCED GESTURE ENGINE ---
-        function detectGesture(lm) {
-            // Helper: Is Finger Extended? (Tip Y < PIP Y) - Note: Y is inverted in MediaPipe video coords
-            const isExtended = (tip, pip) => lm[tip].y < lm[pip].y;
-            
-            // Finger States
-            const thumbUp = isExtended(4, 2); // Less reliable for thumb, but okay for open palm
-            const indexUp = isExtended(8, 6);
-            const middleUp = isExtended(12, 10);
-            const ringUp = isExtended(16, 14);
-            const pinkyUp = isExtended(20, 18);
-
-            const fingersUpCount = [indexUp, middleUp, ringUp, pinkyUp].filter(Boolean).length;
-            
-            // 1. PINCH (Thumb touches Index)
-            const dPinch = Math.hypot(lm[8].x - lm[4].x, lm[8].y - lm[4].y);
-            if (dPinch < 0.05) return "PINCH";
-
-            // 2. FIST (0 or 1 finger up)
-            if (fingersUpCount === 0) return "FIST";
-
-            // 3. PALM (All 4 fingers up + Thumb usually out)
-            if (fingersUpCount === 4) return "PALM";
-
-            // 4. PEACE (Index + Middle Up only)
-            if (indexUp && middleUp && !ringUp && !pinkyUp) return "PEACE";
-
-            // Default
-            return "POINT";
-        }
-
-        // --- CAMERA ---
-        async function enableCam() {
-            document.getElementById('start-btn').innerText = "Loading AI...";
-            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
-            handLandmarker = await HandLandmarker.createFromOptions(vision, {
-                baseOptions: { modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`, delegate: "GPU" },
-                runningMode: "VIDEO", numHands: 1, minHandDetectionConfidence: 0.3, minTrackingConfidence: 0.3
-            });
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
-            video.addEventListener("loadeddata", () => {
-                gsap.to("#intro-screen", { opacity: 0, onComplete: () => document.getElementById("intro-screen").style.display='none' });
-                document.getElementById("video-container").style.opacity = 1;
-                predictWebcam();
-            });
-        }
-
-        let targetX = 0, targetY = 0, currentX = 0, currentY = 0;
-
-        async function predictWebcam() {
-            if (handLandmarker && video.currentTime !== 0) {
-                const results = handLandmarker.detectForVideo(video, performance.now());
-                
-                if (results.landmarks.length > 0) {
-                    const lm = results.landmarks[0];
-                    const gesture = detectGesture(lm);
-                    
-                    // Coordinates (Index Tip)
-                    targetX = (1 - lm[8].x) * 40 - 20; 
-                    targetY = -(lm[8].y) * 30 + 15;
-                    cursorMesh.visible = true;
-
-                    // --- STATE MACHINE ---
-                    let interactType = 0.0;
-                    let cursorColor = 0x00ffff;
-                    let label = "POINTING";
-                    let targetSpeed = 1.0;
-
-                    if (gesture === "FIST") {
-                        interactType = 1.0; // Implode
-                        cursorColor = 0xff0055; // Red
-                        label = "FIST: IMPLODE";
-                    } else if (gesture === "PALM") {
-                        interactType = 2.0; // Explode
-                        cursorColor = 0xffaa00; // Orange
-                        label = "PALM: EXPLODE";
-                    } else if (gesture === "PINCH") {
-                        interactType = 4.0; // Freeze
-                        targetSpeed = 0.05; // Slow down time
-                        cursorColor = 0xffffff; // White
-                        label = "PINCH: FREEZE";
-                    } else if (gesture === "PEACE") {
-                        interactType = 0.0;
-                        const now = Date.now();
-                        if (now - lastGestureTime > 2000) {
-                            currentShapeIndex = (currentShapeIndex + 1) % shapeKeys.length;
-                            switchShape(shapeKeys[currentShapeIndex]);
-                            lastGestureTime = now;
-                        }
-                        label = "PEACE: NEXT SHAPE";
-                    } else {
-                        interactType = 3.0; // Standard Point
-                    }
-
-                    // Apply
-                    material.uniforms.uInteractType.value = interactType;
-                    cursorMesh.material.color.setHex(cursorColor);
-                    gestureLabel.innerText = label;
-                    gestureLabel.style.color = (gesture === "PINCH" ? "white" : (gesture === "FIST" ? "#ff0055" : (gesture === "PALM" ? "#ffaa00" : "cyan")));
-                    
-                    // Smooth time speed transition
-                    timeSpeed += (targetSpeed - timeSpeed) * 0.1;
-                    material.uniforms.uSpeed.value = timeSpeed;
-
-                } else {
-                    gestureLabel.innerText = "NO HAND";
-                    gestureLabel.style.color = "#555";
-                    material.uniforms.uInteractType.value = 0.0;
-                    cursorMesh.visible = false;
-                }
-            }
-            requestAnimationFrame(predictWebcam);
-        }
-
-        // Loop
-        const clock = new THREE.Clock();
-        function animate() {
-            requestAnimationFrame(animate);
-            const time = clock.getElapsedTime();
-            material.uniforms.uTime.value = time;
-            
-            // Lerp Mouse
-            currentX += (targetX - currentX) * 0.1;
-            currentY += (targetY - currentY) * 0.1;
-            material.uniforms.uMouse.value.set(currentX, currentY, 0);
-
-            cursorMesh.position.set(currentX, currentY, 10);
-            
-            // Rotation depends on speed (freeze stops rotation too)
-            particles.rotation.y += 0.005 * material.uniforms.uSpeed.value;
-            
-            composer.render();
-        }
-
-        document.getElementById('start-btn').addEventListener('click', enableCam);
-        document.getElementById('btn-sphere').onclick = () => switchShape('sphere');
-        document.getElementById('btn-heart').onclick = () => switchShape('heart');
-        document.getElementById('btn-saturn').onclick = () => switchShape('saturn');
-        document.getElementById('btn-spiral').onclick = () => switchShape('spiral');
-
-        animate();
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            composer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
-</body>
-</html>
+### 1. Clone
+```bash
+git clone [https://github.com/your-username/holoflux-gesture-engine.git](https://github.com/your-username/holoflux-gesture-engine.git)
+cd holoflux-gesture-engine
