@@ -3,174 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Kinetic - Pro UI</title>
+    <title>Neon Kinetic - Final Fixed</title>
     <style>
         /* --- RESET & BASE --- */
-        body { margin: 0; overflow: hidden; background-color: #050505; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { margin: 0; overflow: hidden; background-color: #020202; font-family: 'Segoe UI', sans-serif; }
         canvas { display: block; }
-        
-        /* --- UI OVERLAY --- */
-        #ui-container {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 20px;
-            box-sizing: border-box;
-            z-index: 10;
+
+        /* --- UI LAYER --- */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 10;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 20px; box-sizing: border-box;
         }
 
         /* --- HEADER --- */
-        .header {
-            text-align: center;
-            text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
-            animation: fadeInDown 1s ease-out;
+        .header h1 {
+            color: white; margin: 0; font-weight: 200; letter-spacing: 5px; text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0,255,255,0.6);
         }
-        h1 {
-            margin: 0; color: white; font-weight: 200; letter-spacing: 4px; font-size: 2rem;
-            text-transform: uppercase;
-        }
-        .subtitle { color: #00ffff; font-size: 0.9rem; letter-spacing: 1px; margin-top: 5px; opacity: 0.8; }
+        .header p { color: #00ffff; margin: 5px 0 0 0; font-size: 12px; letter-spacing: 2px; }
 
-        /* --- CONTROL PANEL (Glassmorphism) --- */
+        /* --- CONTROL PANEL --- */
         #controls {
             pointer-events: auto;
-            background: rgba(20, 20, 30, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 20px;
-            width: 300px;
-            position: absolute;
-            top: 20px; left: 20px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            transition: transform 0.3s ease;
+            background: rgba(10, 10, 15, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px; border-radius: 15px; width: 280px;
         }
-        #controls:hover { transform: scale(1.02); }
-
-        .control-group { margin-bottom: 15px; }
-        .control-label { color: #aaa; font-size: 12px; margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* Custom Buttons */
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         button {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 13px;
+            background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 12px;
         }
-        button:hover { background: rgba(0, 255, 255, 0.2); border-color: #00ffff; }
-        button.active { background: #00ffff; color: #000; font-weight: bold; box-shadow: 0 0 10px #00ffff; }
+        button:hover { background: rgba(0,255,255,0.2); border-color: #00ffff; }
+        button.active { background: #00ffff; color: black; font-weight: bold; box-shadow: 0 0 15px #00ffff; }
 
-        /* Sliders */
-        input[type=range] {
-            width: 100%; -webkit-appearance: none; background: transparent;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
-            background: #00ffff; cursor: pointer; margin-top: -5px; box-shadow: 0 0 10px #00ffff;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%; height: 4px; cursor: pointer; background: rgba(255,255,255,0.2); border-radius: 2px;
-        }
-
-        /* --- STATUS & CAMERA --- */
+        /* --- STATUS PANEL --- */
         #status-panel {
-            position: absolute; bottom: 20px; left: 20px;
-            display: flex; align-items: flex-end; gap: 15px;
-            pointer-events: auto;
+            pointer-events: auto; background: rgba(0,0,0,0.8); border: 1px solid #333;
+            padding: 15px; border-radius: 10px; display: flex; align-items: center; gap: 15px;
+            width: fit-content;
         }
-        #video-preview {
-            width: 120px; height: 90px;
-            background: #000; border-radius: 8px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            object-fit: cover; transform: scaleX(-1);
-            opacity: 0.5; transition: opacity 0.3s;
-        }
-        #video-preview.active { opacity: 1; border-color: #00ffff; }
+        /* Hidden video element, vital for logic but not for display */
+        #video-feed { width: 100px; height: 75px; background: #222; transform: scaleX(-1); border-radius: 4px; opacity: 0.5; }
         
-        .status-text {
-            color: #ccc; font-size: 14px; background: rgba(0,0,0,0.5);
-            padding: 8px 12px; border-radius: 6px; border-left: 3px solid #00ffff;
+        .status-info { color: #888; font-size: 13px; line-height: 1.4; }
+        .status-info b { color: white; }
+        .status-indicator {
+            display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #333; margin-right: 5px;
         }
-        .status-text b { color: #fff; }
+        .active-dot { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
 
-        /* --- ERROR MODAL --- */
-        #error-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 1000;
-            justify-content: center; align-items: center; text-align: center;
+        /* --- RED DEBUG CURSOR --- */
+        /* This shows you exactly where the computer thinks your hand is */
+        #hand-cursor {
+            position: absolute; width: 20px; height: 20px;
+            border: 2px solid #ff0000; border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none;
+            box-shadow: 0 0 20px #ff0000; z-index: 100;
+            display: none; /* Hidden until hand found */
+            transition: width 0.2s, height 0.2s;
         }
-        .modal-content {
-            background: #1a1a1a; padding: 40px; border-radius: 12px; border: 1px solid #333; max-width: 500px;
-        }
-        .modal-content h2 { color: #ff4444; margin-top: 0; }
-        .modal-content p { color: #ddd; line-height: 1.6; }
-        .highlight { color: #00ffff; background: rgba(0,255,255,0.1); padding: 2px 6px; border-radius: 4px; }
-
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        #hand-cursor.pinching { background: rgba(255,0,0,0.5); width: 10px; height: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="error-modal">
-        <div class="modal-content">
-            <h2>⚠️ Camera Access Blocked</h2>
-            <p>Browsers block camera access on <b>file://</b> paths for security.</p>
-            <p>To fix this easily:</p>
-            <p>1. Don't double click the file.<br>2. Drag this file into <span class="highlight">Netlify Drop</span> (online).<br>3. Or use "Web Server for Chrome".</p>
-            <button onclick="document.getElementById('error-modal').style.display='none'" style="width:100%; margin-top:15px; background:#333;">I Understand - Use Mouse Mode</button>
-        </div>
-    </div>
+    <div id="hand-cursor"></div>
 
-    <div id="ui-container">
+    <div id="ui-layer">
         <div id="controls">
-            <h3 style="margin-top:0; color:white; border-bottom:1px solid #333; padding-bottom:10px;">Settings</h3>
-            
-            <div class="control-group">
-                <span class="control-label">Shape Morph</span>
-                <div class="btn-grid">
-                    <button onclick="setShape('globe')" class="active" id="btn-globe">Globe</button>
-                    <button onclick="setShape('heart')" id="btn-heart">Heart</button>
-                    <button onclick="setShape('saturn')" id="btn-saturn">Saturn</button>
-                    <button onclick="setShape('flower')" id="btn-flower">Flower</button>
-                    <button onclick="setShape('helix')" id="btn-helix">Helix</button>
-                    <button onclick="setShape('random')" id="btn-random">Cloud</button>
-                </div>
+            <div style="color:white; font-size:14px; border-bottom:1px solid #444; padding-bottom:10px; margin-bottom:10px;">
+                SHAPE SELECTOR
             </div>
-
-            <div class="control-group">
-                <span class="control-label">Bloom Intensity</span>
-                <input type="range" min="0" max="3" step="0.1" value="1.5" id="bloom-slider">
+            <div class="btn-grid">
+                <button onclick="setShape('globe')" class="active" id="btn-globe">Globe</button>
+                <button onclick="setShape('heart')" id="btn-heart">Heart</button>
+                <button onclick="setShape('saturn')" id="btn-saturn">Saturn</button>
+                <button onclick="setShape('flower')" id="btn-flower">Flower</button>
+                <button onclick="setShape('helix')" id="btn-helix">Helix</button>
+                <button onclick="setShape('random')" id="btn-random">Cloud</button>
             </div>
-
-            <div class="control-group">
-                <span class="control-label">Particle Size</span>
-                <input type="range" min="0.05" max="0.5" step="0.01" value="0.15" id="size-slider">
-            </div>
-            
-            <div style="font-size:11px; color:#555; margin-top:10px;">
-                * Camera requires HTTPS or Localhost
+            <div style="margin-top:15px; font-size:11px; color:#666;">
+                * PINCH to Explode<br>* MOVE palm to Attract
             </div>
         </div>
 
         <div class="header">
             <h1>Neon Kinetic</h1>
-            <div class="subtitle">AI GESTURE PARTICLE SYSTEM</div>
+            <p>ADVANCED GESTURE SYSTEM</p>
         </div>
 
         <div id="status-panel">
-            <video id="video-preview" playsinline muted autoplay></video>
-            <div class="status-text" id="status-display">
-                State: <b>Initializing...</b><br>
-                Source: <b>Checking...</b>
+            <video id="video-feed" playsinline muted autoplay></video>
+            <div class="status-info" id="status-text">
+                <span class="status-indicator" id="dot"></span>
+                System Status:<br>
+                <b id="msg">Initializing...</b>
             </div>
         </div>
     </div>
@@ -194,57 +125,56 @@
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-        // --- STATE & CONFIG ---
+        // --- CONFIGURATION ---
         const CONFIG = {
-            count: 12000,
-            size: 0.15,
-            bloom: 1.5,
-            colorSpeed: 0.01,
-            lerp: 0.05
+            particleCount: 15000,
+            particleSize: 0.15,
+            bloomStrength: 1.6,
+            morphSpeed: 0.05,
+            interactionRadius: 25, // Increased for easier grabbing
+            pinchThreshold: 0.06   // Sensitivity for pinch
         };
 
+        // --- GLOBALS ---
         let scene, camera, renderer, composer, controls, particles;
-        let positions, targetPositions, initialPositions, colors;
+        let positions, targetPositions, colors;
         let clock = new THREE.Clock();
-        let mouse = new THREE.Vector2();
-        let handPos = new THREE.Vector3();
+        
+        // Tracking State
+        let handPos = new THREE.Vector3(0,0,0); // Screen space -1 to 1
         let isHandDetected = false;
         let isPinching = false;
-        
+        let mouse = new THREE.Vector2(0,0);
+
         // --- INIT ---
         initThree();
+        initCameraAndAI(); // The Fixed Camera Logic
         animate();
-        
-        // Check Protocol immediately
-        if (window.location.protocol === 'file:') {
-            document.getElementById('error-modal').style.display = 'flex';
-            document.getElementById('status-display').innerHTML = "State: <b>Restricted</b><br>Source: <b>Mouse Only</b>";
-        } else {
-            initCamera(); 
-        }
 
-        // --- THREE.JS SETUP ---
+        // --- 1. THREE.JS VISUALS ---
         function initThree() {
+            const container = document.getElementById('canvas-container');
+            
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x000000, 0.02);
 
             camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
-            camera.position.z = 30;
+            camera.position.z = 35;
 
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            document.body.appendChild(renderer.domElement);
+            container.appendChild(renderer.domElement);
 
-            // Bloom
-            const renderScene = new RenderPass(scene, camera);
+            // Post Processing (Glow)
+            const renderPass = new RenderPass(scene, camera);
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.strength = CONFIG.bloom;
-            bloomPass.radius = 0.5;
             bloomPass.threshold = 0.1;
-            
+            bloomPass.strength = CONFIG.bloomStrength;
+            bloomPass.radius = 0.5;
+
             composer = new EffectComposer(renderer);
-            composer.addPass(renderScene);
+            composer.addPass(renderPass);
             composer.addPass(bloomPass);
 
             controls = new OrbitControls(camera, renderer.domElement);
@@ -252,37 +182,45 @@
             controls.autoRotate = true;
             controls.autoRotateSpeed = 0.5;
 
+            // Create Particles
             createParticles();
             
             // Listeners
-            window.addEventListener('resize', onWindowResize);
-            document.addEventListener('mousemove', onMouseMove);
-            
-            // UI Hookup
-            document.getElementById('bloom-slider').addEventListener('input', (e) => {
-                bloomPass.strength = parseFloat(e.target.value);
-            });
-            document.getElementById('size-slider').addEventListener('input', (e) => {
-                particles.material.size = parseFloat(e.target.value);
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                composer.setSize(window.innerWidth, window.innerHeight);
             });
             
-            window.setShape = calculateShape; // Expose to global scope for HTML buttons
+            // Mouse fallback
+            document.addEventListener('mousemove', (e) => {
+                if(!isHandDetected) {
+                    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                }
+            });
+            
+            // Expose shape button function
+            window.setShape = calculateShape;
         }
 
         function createParticles() {
             const geometry = new THREE.BufferGeometry();
-            positions = new Float32Array(CONFIG.count * 3);
-            targetPositions = new Float32Array(CONFIG.count * 3);
-            colors = new Float32Array(CONFIG.count * 3);
+            const count = CONFIG.particleCount;
+            
+            positions = new Float32Array(count * 3);
+            targetPositions = new Float32Array(count * 3);
+            colors = new Float32Array(count * 3);
             
             const color = new THREE.Color();
             
-            for(let i=0; i<CONFIG.count; i++) {
+            for(let i=0; i<count; i++) {
                 positions[i*3] = (Math.random()-0.5)*50;
                 positions[i*3+1] = (Math.random()-0.5)*50;
                 positions[i*3+2] = (Math.random()-0.5)*50;
                 
-                color.setHSL(Math.random(), 0.8, 0.6);
+                color.setHSL(0.6 + Math.random()*0.2, 0.8, 0.6); // Blue/Purple
                 colors[i*3] = color.r;
                 colors[i*3+1] = color.g;
                 colors[i*3+2] = color.b;
@@ -291,10 +229,19 @@
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
             
-            const texture = createTexture();
+            // Custom Texture
+            const cvs = document.createElement('canvas'); cvs.width=32; cvs.height=32;
+            const ctx = cvs.getContext('2d');
+            const grd = ctx.createRadialGradient(16,16,0,16,16,16);
+            grd.addColorStop(0, 'white');
+            grd.addColorStop(0.4, 'rgba(0,255,255,0.5)');
+            grd.addColorStop(1, 'transparent');
+            ctx.fillStyle = grd; ctx.fillRect(0,0,32,32);
+            const tex = new THREE.CanvasTexture(cvs);
+
             const material = new THREE.PointsMaterial({
-                size: CONFIG.size,
-                map: texture,
+                size: CONFIG.particleSize,
+                map: tex,
                 vertexColors: true,
                 blending: THREE.AdditiveBlending,
                 depthWrite: false,
@@ -307,69 +254,60 @@
             calculateShape('globe');
         }
 
-        function createTexture() {
-            const c = document.createElement('canvas'); c.width=32; c.height=32;
-            const ctx = c.getContext('2d');
-            const g = ctx.createRadialGradient(16,16,0,16,16,16);
-            g.addColorStop(0, 'rgba(255,255,255,1)');
-            g.addColorStop(0.4, 'rgba(100,200,255,0.5)');
-            g.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = g; ctx.fillRect(0,0,32,32);
-            return new THREE.CanvasTexture(c);
-        }
-
-        // --- SHAPE LOGIC ---
+        // --- 2. SHAPE MATH ---
         function calculateShape(type) {
-            // UI Update
+            // Button Styling
             document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
             const btn = document.getElementById(`btn-${type}`);
             if(btn) btn.classList.add('active');
 
-            for(let i=0; i<CONFIG.count; i++) {
+            const count = CONFIG.particleCount;
+            for(let i=0; i<count; i++) {
                 const idx = i*3;
                 let x,y,z;
-                
+
                 if(type === 'globe') {
-                    const phi = Math.acos(-1 + (2*i)/CONFIG.count);
-                    const theta = Math.sqrt(CONFIG.count * Math.PI) * phi;
-                    x = 10 * Math.cos(theta) * Math.sin(phi);
-                    y = 10 * Math.sin(theta) * Math.sin(phi);
-                    z = 10 * Math.cos(phi);
-                } else if (type === 'heart') {
-                     const t = (i/CONFIG.count) * Math.PI * 20; // Spread logic
-                     // parametric heart
-                     x = 16 * Math.pow(Math.sin(t), 3) * 0.5;
-                     y = (13 * Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t)) * 0.5;
-                     z = (Math.random()-0.5)*4;
-                } else if (type === 'saturn') {
-                    if (i < CONFIG.count * 0.7) {
-                        const r = 6;
-                        const phi = Math.acos(-1 + (2*i)/(CONFIG.count*0.7));
-                        const theta = Math.sqrt(CONFIG.count*0.7 * Math.PI) * phi;
-                        x = r * Math.cos(theta) * Math.sin(phi);
-                        y = r * Math.sin(theta) * Math.sin(phi);
-                        z = r * Math.cos(phi);
+                    const phi = Math.acos(-1 + (2*i)/count);
+                    const theta = Math.sqrt(count * Math.PI) * phi;
+                    x = 12 * Math.cos(theta) * Math.sin(phi);
+                    y = 12 * Math.sin(theta) * Math.sin(phi);
+                    z = 12 * Math.cos(phi);
+                } else if(type === 'heart') {
+                    const t = i * 0.1;
+                    x = 16 * Math.pow(Math.sin(t), 3) * 0.6;
+                    y = (13 * Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t)) * 0.6;
+                    z = (Math.random()-0.5) * 5;
+                } else if(type === 'saturn') {
+                    if(i < count*0.6) {
+                        // Planet
+                        const phi = Math.acos(-1 + (2*i)/(count*0.6));
+                        const theta = Math.sqrt(count*0.6 * Math.PI) * phi;
+                        x = 7 * Math.cos(theta) * Math.sin(phi);
+                        y = 7 * Math.sin(theta) * Math.sin(phi);
+                        z = 7 * Math.cos(phi);
                     } else {
-                        const ang = Math.random()*Math.PI*2;
-                        const r = 9 + Math.random()*5;
+                        // Ring
+                        const ang = Math.random() * 6.28;
+                        const r = 10 + Math.random() * 6;
                         x = r * Math.cos(ang);
                         z = r * Math.sin(ang);
-                        y = (Math.random()-0.5)*0.5;
+                        y = (Math.random()-0.5);
                         // Tilt
-                        const ty = y*Math.cos(0.5) - z*Math.sin(0.5);
-                        const tz = y*Math.sin(0.5) + z*Math.cos(0.5);
+                        let ty = y*Math.cos(0.4) - z*Math.sin(0.4);
+                        let tz = y*Math.sin(0.4) + z*Math.cos(0.4);
                         y=ty; z=tz;
                     }
-                } else if (type === 'helix') {
-                    const t = i * 0.05;
-                    x = 5 * Math.cos(t);
-                    z = 5 * Math.sin(t);
-                    y = (i * 0.15) - 10;
-                    if(i%2==0) { x = 5 * Math.cos(t+3.14); z = 5 * Math.sin(t+3.14); }
+                } else if(type === 'helix') {
+                    const t = i*0.02;
+                    x = 6 * Math.cos(t);
+                    z = 6 * Math.sin(t);
+                    y = (i*0.05) - 15;
+                    if(i%2==0) { x = 6 * Math.cos(t+3.14); z = 6 * Math.sin(t+3.14); }
                 } else {
-                     x = (Math.random()-0.5)*30;
-                     y = (Math.random()-0.5)*30;
-                     z = (Math.random()-0.5)*30;
+                    // Random/Cloud
+                    x = (Math.random()-0.5)*40;
+                    y = (Math.random()-0.5)*40;
+                    z = (Math.random()-0.5)*40;
                 }
 
                 targetPositions[idx] = x;
@@ -378,147 +316,174 @@
             }
         }
 
-        // --- AI CAMERA LOGIC (NATIVE) ---
-        async function initCamera() {
-            const videoEl = document.getElementById('video-preview');
-            const statusEl = document.getElementById('status-display');
-
-            try {
-                // 1. Force Browser to ask for Camera (Native API)
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        width: 320,
-                        height: 240,
-                        facingMode: "user"
-                    }
-                });
-
-                // 2. Attach stream to video element
-                videoEl.srcObject = stream;
-                await new Promise((resolve) => {
-                    videoEl.onloadedmetadata = () => {
-                        videoEl.play();
-                        resolve();
-                    };
-                });
-                
-                videoEl.classList.add('active');
-                statusEl.innerHTML = "State: <b>Loading AI...</b><br>Source: <b>Camera Acquired</b>";
-
-                // 3. Initialize MediaPipe Hands
-                const { Hands } = await import('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js');
-                
-                const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-                hands.setOptions({
-                    maxNumHands: 1, 
-                    minDetectionConfidence: 0.5, 
-                    minTrackingConfidence: 0.5
-                });
-                
-                hands.onResults(onResults);
-
-                // 4. Start Prediction Loop
-                async function predictWebcam() {
-                    if(videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
-                        await hands.send({image: videoEl});
-                    }
-                    requestAnimationFrame(predictWebcam);
-                }
-                
-                predictWebcam();
-                statusEl.innerHTML = "State: <b>Active</b><br>Source: <b>Hand Tracking</b>";
-
-            } catch (err) {
-                console.error("Camera Error:", err);
-                statusEl.innerHTML = `State: <b>Error</b><br>Source: <b>${err.name}</b>`;
-                alert("Please allow camera access to use hand gestures. Falling back to mouse.");
-            }
-        }
-
-        function onResults(results) {
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                isHandDetected = true;
-                const lm = results.multiHandLandmarks[0];
-                handPos.set(lm[9].x, lm[9].y, lm[9].z);
-                
-                // Pinch detection (Thumb 4, Index 8)
-                const d = Math.sqrt(Math.pow(lm[4].x - lm[8].x, 2) + Math.pow(lm[4].y - lm[8].y, 2));
-                isPinching = d < 0.05;
-
-                const action = isPinching ? "<span style='color:#ff4444'>EXPLODE</span>" : "<span style='color:#00ffff'>ATTRACT</span>";
-                document.getElementById('status-display').innerHTML = `State: <b>${action}</b><br>Source: <b>Hand Tracking</b>`;
-            } else {
-                isHandDetected = false;
-                document.getElementById('status-display').innerHTML = "State: <b>Searching...</b><br>Source: <b>Hand Tracking</b>";
-            }
-        }
-
-        // --- LOOP ---
+        // --- 3. ANIMATION LOOP ---
         function animate() {
             requestAnimationFrame(animate);
             const time = clock.getElapsedTime();
-            
-            // Interaction Target
-            let tx=0, ty=0, tz=0;
+
+            // Determine Interaction Point (Hand or Mouse)
+            // Screen coords (-1 to 1) -> World coords (approx -20 to 20)
+            let tx, ty;
             if(isHandDetected) {
-                tx = (handPos.x - 0.5) * -20;
-                ty = (handPos.y - 0.5) * -20;
-                tz = 0;
+                // Hand is active
+                tx = handPos.x * 25; 
+                ty = handPos.y * 25;
             } else {
-                tx = mouse.x * 20;
-                ty = mouse.y * 20;
+                // Mouse fallback
+                tx = mouse.x * 25;
+                ty = mouse.y * 25;
             }
 
             const p = particles.geometry.attributes.position.array;
-            
-            for(let i=0; i<CONFIG.count; i++) {
+
+            for(let i=0; i<CONFIG.particleCount; i++) {
                 const idx = i*3;
-                let px = p[idx], py = p[idx+1], pz = p[idx+2];
-                
-                // 1. Move towards shape
+                let px = p[idx];
+                let py = p[idx+1];
+                let pz = p[idx+2];
+
                 let targetX = targetPositions[idx];
                 let targetY = targetPositions[idx+1];
                 let targetZ = targetPositions[idx+2];
-                
-                // 2. Interaction
+
+                // --- INTERACTION PHYSICS ---
                 const dx = px - tx;
                 const dy = py - ty;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                
-                if(isPinching && dist < 10) {
-                    // Explode
-                    targetX += dx * 2; 
-                    targetY += dy * 2;
-                } else if (!isPinching && dist < 8 && (isHandDetected || dist>0.5)) {
-                    // Attract/Swirl
-                    targetX = tx + Math.sin(time*2 + i)*3;
-                    targetY = ty + Math.cos(time*2 + i)*3;
+                const dist = Math.sqrt(dx*dx + dy*dy); // 2D distance for simplicity
+
+                if(isPinching) {
+                    // EXPLODE MODE: Push away strongly
+                    if(dist < 15) {
+                        const force = (15 - dist) * 2;
+                        targetX += (dx/dist) * force * 2;
+                        targetY += (dy/dist) * force * 2;
+                        targetZ += (Math.random()-0.5) * force * 2;
+                    }
+                } 
+                else if (dist < CONFIG.interactionRadius) {
+                    // ATTRACT MODE: Pull towards hand
+                    // Add a swirling sine wave
+                    const angle = Math.atan2(dy, dx);
+                    const pull = (CONFIG.interactionRadius - dist) * 0.05;
+                    
+                    targetX -= Math.cos(angle) * pull;
+                    targetY -= Math.sin(angle) * pull;
+                    targetZ += Math.sin(time * 5 + i) * 0.5; // Swirl Z
                 }
-                
-                // 3. Noise/Float
-                targetX += Math.sin(time + i*0.1)*0.2;
-                
-                // Update
-                p[idx] += (targetX - px) * CONFIG.lerp;
-                p[idx+1] += (targetY - py) * CONFIG.lerp;
-                p[idx+2] += (targetZ - pz) * CONFIG.lerp;
+
+                // Noise for life
+                targetX += Math.sin(time * 0.5 + i) * 0.1;
+                targetY += Math.cos(time * 0.3 + i) * 0.1;
+
+                // Move current pos to target pos
+                p[idx] += (targetX - px) * CONFIG.morphSpeed;
+                p[idx+1] += (targetY - py) * CONFIG.morphSpeed;
+                p[idx+2] += (targetZ - pz) * CONFIG.morphSpeed;
             }
-            
+
             particles.geometry.attributes.position.needsUpdate = true;
             controls.update();
             composer.render();
         }
 
-        function onWindowResize() {
-            camera.aspect = window.innerWidth/window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            composer.setSize(window.innerWidth, window.innerHeight);
-        }
-        
-        function onMouseMove(e) {
-            mouse.x = (e.clientX/window.innerWidth)*2-1;
-            mouse.y = -(e.clientY/window.innerHeight)*2+1;
+        // --- 4. ROBUST AI CAMERA SETUP ---
+        async function initCameraAndAI() {
+            const videoElement = document.getElementById('video-feed');
+            const statusMsg = document.getElementById('msg');
+            const statusDot = document.getElementById('dot');
+            const cursor = document.getElementById('hand-cursor');
+
+            statusMsg.innerText = "Requesting Camera...";
+
+            try {
+                // A. GET CAMERA STREAM
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 320, height: 240, facingMode: "user" }
+                });
+
+                videoElement.srcObject = stream;
+                
+                // Wait for video to actually play data
+                await new Promise(resolve => {
+                    videoElement.onloadedmetadata = () => {
+                        videoElement.play();
+                        resolve();
+                    };
+                });
+
+                statusMsg.innerText = "Loading AI Model...";
+
+                // B. LOAD MEDIAPIPE
+                const { Hands } = await import('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js');
+                
+                const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+                
+                hands.setOptions({
+                    maxNumHands: 1,
+                    minDetectionConfidence: 0.4, // Low light friendly
+                    minTrackingConfidence: 0.5
+                });
+
+                hands.onResults((results) => {
+                    if(results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                        // Hand Found
+                        isHandDetected = true;
+                        statusDot.classList.add('active-dot');
+                        
+                        const lm = results.multiHandLandmarks[0];
+                        
+                        // 1. Get Position (Palm Center roughly index 9)
+                        // Mirror X (1 - x) because webcam acts like a mirror
+                        const rawX = 1 - lm[9].x; 
+                        const rawY = 1 - lm[9].y; // Flip Y to match ThreeJS
+                        
+                        // Map 0..1 to -1..1
+                        handPos.x = (rawX * 2) - 1;
+                        handPos.y = (rawY * 2) - 1;
+
+                        // 2. Pinch Detection (Thumb Tip 4 vs Index Tip 8)
+                        const d = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
+                        isPinching = d < CONFIG.pinchThreshold;
+
+                        // 3. Update Visual Cursor (Red Dot)
+                        cursor.style.display = 'block';
+                        cursor.style.left = (rawX * 100) + '%';
+                        cursor.style.top = (lm[9].y * 100) + '%'; // CSS uses top-down Y
+                        
+                        if(isPinching) {
+                            cursor.classList.add('pinching');
+                            statusMsg.innerHTML = "Action: <span style='color:#ff0000'>EXPLODE</span>";
+                        } else {
+                            cursor.classList.remove('pinching');
+                            statusMsg.innerHTML = "Action: <span style='color:#00ffff'>ATTRACT</span>";
+                        }
+
+                    } else {
+                        // Lost Hand
+                        isHandDetected = false;
+                        statusDot.classList.remove('active-dot');
+                        cursor.style.display = 'none';
+                        statusMsg.innerText = "Scanning for Hand...";
+                    }
+                });
+
+                // C. START LOOP
+                async function frameLoop() {
+                    // Only send data if video is ready
+                    if(videoElement.readyState >= 2) {
+                        await hands.send({image: videoElement});
+                    }
+                    requestAnimationFrame(frameLoop);
+                }
+                
+                frameLoop();
+                statusMsg.innerText = "System Ready. Show Hand.";
+
+            } catch(err) {
+                console.error(err);
+                statusMsg.innerHTML = `Error: ${err.message}`;
+                alert("Camera failed. Please use HTTPS (Vercel) and Allow Camera.");
+            }
         }
     </script>
 </body>
