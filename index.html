@@ -3,48 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gesture Controlled Hologram</title>
+    <title>Gesture Hologram</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; user-select: none; }
+        
+        /* THE CANVAS */
         #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* UI Overlay */
+        /* INVISIBLE VIDEO FEED (Logic runs, but user sees nothing) */
+        #video-feed {
+            position: absolute; top: 0; left: 0; 
+            width: 1px; height: 1px; opacity: 0; 
+            pointer-events: none; z-index: -1;
+        }
+
+        /* UI OVERLAY (Buttons) */
         #ui-layer {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
             z-index: 10; display: flex; gap: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px 25px; border-radius: 50px;
-            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px 30px; border-radius: 50px;
+            backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            opacity: 0; transition: opacity 1s ease; pointer-events: none;
         }
         
+        #ui-layer.visible { opacity: 1; pointer-events: all; }
+
         button {
-            background: transparent; border: 1px solid rgba(255,255,255,0.3);
-            color: white; padding: 10px 20px; border-radius: 20px;
-            cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;
-            transition: all 0.3s;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);
+            color: #ccc; padding: 12px 24px; border-radius: 25px;
+            cursor: pointer; text-transform: uppercase; font-size: 11px; letter-spacing: 2px;
+            font-weight: 600; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         button:hover, button.active {
-            background: white; color: black; box-shadow: 0 0 15px rgba(255,255,255,0.8);
+            background: white; color: black; 
+            box-shadow: 0 0 20px rgba(255,255,255,0.6);
+            transform: translateY(-2px);
         }
 
-        #video-feed {
-            position: absolute; top: 10px; right: 10px; width: 160px; height: 120px;
-            z-index: 2; border-radius: 10px; opacity: 0.3; transform: scaleX(-1);
-            border: 1px solid rgba(255,255,255,0.2); pointer-events: none;
+        /* START SCREEN (To fix permission issues) */
+        #intro-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center;
+            transition: opacity 0.8s ease;
         }
+        
+        h1 { font-weight: 200; letter-spacing: 5px; margin-bottom: 10px; text-transform: uppercase; }
+        p { color: #888; font-size: 14px; margin-bottom: 30px; letter-spacing: 1px; }
 
-        #loading {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: white; font-size: 24px; z-index: 20; pointer-events: none;
-            text-shadow: 0 0 10px cyan;
+        #start-btn {
+            background: transparent; color: cyan; border: 1px solid cyan;
+            padding: 15px 40px; font-size: 14px; letter-spacing: 3px;
+            text-transform: uppercase; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+        
+        #start-btn:hover { background: cyan; color: black; box-shadow: 0 0 30px cyan; }
+
+        #status {
+            position: absolute; top: 20px; left: 20px; color: rgba(255,255,255,0.3);
+            font-size: 10px; letter-spacing: 1px; z-index: 5;
         }
     </style>
 </head>
 <body>
 
-    <div id="loading">Initialize AI Vision & GPU...</div>
+    <div id="intro-screen">
+        <h1>Particle Core</h1>
+        <p>Enable camera for gesture control</p>
+        <button id="start-btn">Initialize System</button>
+    </div>
+
+    <div id="status">Waiting for input...</div>
     <video id="video-feed" playsinline></video>
     <div id="canvas-container"></div>
 
@@ -68,59 +102,54 @@
 
     <script type="module">
         import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
+        import { gsap } from 'https://cdn.skypack.dev/gsap';
 
-        // --- CONFIGURATION ---
-        const PARTICLE_COUNT = 45000;
-        const PARTICLE_SIZE = 0.12;
+        // --- GLOBAL VARIABLES ---
+        let handLandmarker;
+        let isCameraActive = false;
+        const video = document.getElementById("video-feed");
+        const statusText = document.getElementById("status");
         
-        // --- SCENE SETUP ---
+        // --- 1. SETUP THREE.JS SCENE (Visuals) ---
+        const PARTICLE_COUNT = 45000;
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x000000, 0.02);
-
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.z = 30;
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Perf optimization
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // --- POST PROCESSING (BLOOM) ---
+        // Post Processing (Bloom/Glow)
         const renderScene = new RenderPass(scene, camera);
         const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
         bloomPass.threshold = 0;
-        bloomPass.strength = 1.2; // Glow intensity
+        bloomPass.strength = 1.3;
         bloomPass.radius = 0.5;
-
         const composer = new EffectComposer(renderer);
         composer.addPass(renderScene);
         composer.addPass(bloomPass);
 
-        // --- SHADER MATERIAL (THE MAGIC) ---
-        // This handles morphing and interaction on the GPU
+        // Shader Code (Unchanged)
         const vertexShader = `
             uniform float uTime;
             uniform float uMorph;
             uniform vec3 uMouse;
             uniform float uInteractStrength;
-            
             attribute vec3 positionTarget;
             attribute float sizeRandom;
-            
             varying vec3 vColor;
             varying float vDist;
-
-            // Simplex noise function for organic movement
+            // Noise functions
             vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
             vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
-
             float snoise(vec3 v) {
                 const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
                 const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
@@ -163,32 +192,19 @@
                 m = m * m;
                 return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) );
             }
-
             void main() {
-                // Morphing Logic
                 vec3 pos = mix(position, positionTarget, uMorph);
-                
-                // Add noise movement
                 float noiseVal = snoise(pos * 0.1 + uTime * 0.2);
                 pos += normal * noiseVal * 0.5;
-
-                // Interaction Logic (Hand/Mouse)
                 float dist = distance(pos, uMouse);
                 vDist = dist;
-                
-                // If hand is close, repel or attract
                 if(dist < 5.0) {
                     vec3 dir = normalize(pos - uMouse);
                     pos += dir * (5.0 - dist) * uInteractStrength;
                 }
-
                 vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
                 gl_Position = projectionMatrix * mvPosition;
-                
-                // Size attenuation
                 gl_PointSize = (100.0 * sizeRandom) / -mvPosition.z;
-                
-                // Color gradients
                 vColor = mix(vec3(0.1, 0.5, 1.0), vec3(1.0, 0.2, 0.5), noiseVal + 0.5);
             }
         `;
@@ -196,33 +212,23 @@
         const fragmentShader = `
             varying vec3 vColor;
             varying float vDist;
-            
             void main() {
-                // Circular particle
                 float r = distance(gl_PointCoord, vec2(0.5));
                 if (r > 0.5) discard;
-                
-                // Glow center
                 float glow = 1.0 - (r * 2.0);
                 glow = pow(glow, 1.5);
-                
-                // Interactive highlight
                 vec3 finalColor = vColor;
-                if(vDist < 5.0) {
-                    finalColor += vec3(0.5, 0.5, 1.0) * (1.0 - vDist/5.0);
-                }
-
+                if(vDist < 5.0) finalColor += vec3(0.5, 0.5, 1.0) * (1.0 - vDist/5.0);
                 gl_FragColor = vec4(finalColor, glow);
             }
         `;
 
-        // --- GEOMETRY GENERATION ---
+        // Particles Setup
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(PARTICLE_COUNT * 3);
         const targets = new Float32Array(PARTICLE_COUNT * 3);
         const randoms = new Float32Array(PARTICLE_COUNT);
 
-        // Helper: Sphere
         function getSpherePoint(r) {
             const u = Math.random();
             const v = Math.random();
@@ -235,17 +241,11 @@
             };
         }
 
-        // Initialize points (Start as Sphere)
         for (let i = 0; i < PARTICLE_COUNT; i++) {
             const p = getSpherePoint(10);
-            positions[i * 3] = p.x;
-            positions[i * 3 + 1] = p.y;
-            positions[i * 3 + 2] = p.z;
-            
-            targets[i * 3] = p.x;
-            targets[i * 3 + 1] = p.y;
-            targets[i * 3 + 2] = p.z;
-            
+            positions[i * 3] = targets[i * 3] = p.x;
+            positions[i * 3 + 1] = targets[i * 3 + 1] = p.y;
+            positions[i * 3 + 2] = targets[i * 3 + 2] = p.z;
             randoms[i] = Math.random();
         }
 
@@ -254,72 +254,54 @@
         geometry.setAttribute('sizeRandom', new THREE.BufferAttribute(randoms, 1));
 
         const material = new THREE.ShaderMaterial({
-            vertexShader,
-            fragmentShader,
+            vertexShader, fragmentShader,
             uniforms: {
                 uTime: { value: 0 },
-                uMorph: { value: 0 }, // 0 = current pos, 1 = target pos
+                uMorph: { value: 0 },
                 uMouse: { value: new THREE.Vector3(999, 999, 999) },
                 uInteractStrength: { value: 1.0 }
             },
-            transparent: true,
-            depthWrite: false,
-            blending: THREE.AdditiveBlending
+            transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
         });
 
         const particles = new THREE.Points(geometry, material);
         scene.add(particles);
 
-        // --- SHAPE CALCULATORS ---
+        // --- SHAPE LOGIC ---
         const shapes = {
             sphere: () => {
                 const arr = new Float32Array(PARTICLE_COUNT * 3);
                 for(let i=0; i<PARTICLE_COUNT; i++) {
                     const p = getSpherePoint(10);
-                    arr[i*3] = p.x; arr[i*3+1] = p.y; arr[i*3+2] = p.z;
+                    arr[i*3]=p.x; arr[i*3+1]=p.y; arr[i*3+2]=p.z;
                 }
                 return arr;
             },
             heart: () => {
                 const arr = new Float32Array(PARTICLE_COUNT * 3);
                 for(let i=0; i<PARTICLE_COUNT; i++) {
-                    // Parametric Heart
-                    let t = Math.random() * Math.PI * 2;
-                    let u = Math.random() * Math.PI; // distribution
-                    // Scale factor based on distribution to fill the volume
-                    let s = Math.pow(Math.random(), 1/3) * 0.8; 
-                    
+                    let t = Math.random()*Math.PI*2, u=Math.random()*Math.PI;
+                    let s = Math.pow(Math.random(), 1/3)*0.8; 
                     let x = 16 * Math.pow(Math.sin(t), 3);
-                    let y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-                    let z = (Math.random() - 0.5) * 5; // Thickness
-                    
-                    arr[i*3] = x * s; 
-                    arr[i*3+1] = y * s; 
-                    arr[i*3+2] = z;
+                    let y = 13 * Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t);
+                    let z = (Math.random()-0.5)*5;
+                    arr[i*3]=x*s; arr[i*3+1]=y*s; arr[i*3+2]=z;
                 }
                 return arr;
             },
             saturn: () => {
                 const arr = new Float32Array(PARTICLE_COUNT * 3);
                 for(let i=0; i<PARTICLE_COUNT; i++) {
-                    // 60% Planet, 40% Rings
                     if(i < PARTICLE_COUNT * 0.6) {
                         const p = getSpherePoint(7);
-                        arr[i*3] = p.x; arr[i*3+1] = p.y; arr[i*3+2] = p.z;
+                        arr[i*3]=p.x; arr[i*3+1]=p.y; arr[i*3+2]=p.z;
                     } else {
-                        // Rings (Annulus)
                         const theta = Math.random() * Math.PI * 2;
-                        const r = 10 + Math.random() * 8; // Inner radius 10, outer 18
-                        arr[i*3] = r * Math.cos(theta); 
-                        arr[i*3+1] = (Math.random()-0.5) * 0.5; // Flattened Y
-                        arr[i*3+2] = r * Math.sin(theta);
-                        
-                        // Tilt the rings
-                        const tilt = 0.4;
-                        const y = arr[i*3+1];
-                        const z = arr[i*3+2];
-                        arr[i*3+1] = y * Math.cos(tilt) - z * Math.sin(tilt);
-                        arr[i*3+2] = y * Math.sin(tilt) + z * Math.cos(tilt);
+                        const r = 10 + Math.random() * 8;
+                        let x = r * Math.cos(theta), y = (Math.random()-0.5)*0.5, z = r * Math.sin(theta);
+                        arr[i*3] = x;
+                        arr[i*3+1] = y * Math.cos(0.4) - z * Math.sin(0.4);
+                        arr[i*3+2] = y * Math.sin(0.4) + z * Math.cos(0.4);
                     }
                 }
                 return arr;
@@ -327,83 +309,68 @@
             spiral: () => {
                 const arr = new Float32Array(PARTICLE_COUNT * 3);
                 for(let i=0; i<PARTICLE_COUNT; i++) {
-                    const angle = i * 0.005;
-                    const r = i * 0.0005 * 15;
+                    const angle = i * 0.005, r = i * 0.0005 * 15;
                     arr[i*3] = r * Math.cos(angle);
-                    arr[i*3+1] = (Math.random() - 0.5) * 5; // Thickness
+                    arr[i*3+1] = (Math.random() - 0.5) * 5;
                     arr[i*3+2] = r * Math.sin(angle);
                 }
                 return arr;
             }
         };
 
-        // --- TRANSITION LOGIC ---
         window.morphTo = (shapeName) => {
-            // Update UI
             document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-
-            // Logic
-            const newPos = shapes[shapeName]();
-            
-            // We set the CURRENT position to whatever is visually on screen right now (calculated approx)
-            // But simplified: we just swap buffers. 
-            // Better technique: Set 'position' to 'positionTarget', then set 'positionTarget' to new.
-            
-            const currentAttr = geometry.attributes.position.array;
-            const targetAttr = geometry.attributes.positionTarget.array;
-
-            // In a real morph, we want to animate uMorph from 0 to 1.
-            // When we start a new morph, we "bake" the current state into 'position'
-            // and set the new state into 'positionTarget'
-            
-            // For simplicity in this demo, we assume the morph finished or we snap.
-            // Let's just update the target buffer.
-            geometry.attributes.positionTarget.set(newPos);
+            if(event) event.target.classList.add('active');
+            geometry.attributes.positionTarget.set(shapes[shapeName]());
             geometry.attributes.positionTarget.needsUpdate = true;
-            
-            // Reset morph factor to animate
             gsap.fromTo(material.uniforms.uMorph, {value: 0}, {value: 1, duration: 2, ease: "power2.inOut"});
         };
 
         window.toggleExplosion = () => {
-             material.uniforms.uInteractStrength.value = -5.0; // Repel hard
+             material.uniforms.uInteractStrength.value = -5.0;
              setTimeout(() => {
                  gsap.to(material.uniforms.uInteractStrength, {value: 1.0, duration: 1});
              }, 500);
         };
 
-        // --- AI VISION SETUP ---
-        let handLandmarker;
-        let runningMode = "VIDEO";
-        const video = document.getElementById("video-feed");
+        // --- 2. CAMERA AND AI LOGIC ---
+        // This is triggered ONLY when user clicks Start
+        async function enableCam() {
+            document.getElementById('start-btn').innerText = "Loading AI...";
+            
+            try {
+                const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
+                handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                    baseOptions: {
+                        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+                        delegate: "GPU"
+                    },
+                    runningMode: "VIDEO",
+                    numHands: 1,
+                    minHandDetectionConfidence: 0.3, 
+                    minHandPresenceConfidence: 0.3,
+                    minTrackingConfidence: 0.3
+                });
 
-        async function createHandLandmarker() {
-            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
-            handLandmarker = await HandLandmarker.createFromOptions(vision, {
-                baseOptions: {
-                    modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
-                    delegate: "GPU"
-                },
-                runningMode: runningMode,
-                numHands: 1,
-                minHandDetectionConfidence: 0.3, // LOW LIGHT OPTIMIZATION
-                minHandPresenceConfidence: 0.3,
-                minTrackingConfidence: 0.3
-            });
-            document.getElementById('loading').style.display = 'none';
-            startWebcam();
-        }
-
-        function startWebcam() {
-            navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
-                video.addEventListener("loadeddata", predictWebcam);
-            });
+                video.addEventListener("loadeddata", () => {
+                    isCameraActive = true;
+                    // Hide Intro, Show UI
+                    gsap.to("#intro-screen", { opacity: 0, duration: 1, onComplete: () => {
+                        document.getElementById("intro-screen").style.display = 'none';
+                        document.getElementById("ui-layer").classList.add("visible");
+                    }});
+                    predictWebcam();
+                });
+
+            } catch (err) {
+                console.error(err);
+                alert("Camera permission denied or error. Refresh and try again.");
+            }
         }
 
-        // --- LOOP & LOGIC ---
-        // Smooth gesture data
+        // --- TRACKING LOOP ---
         let targetX = 0, targetY = 0;
         let currentX = 0, currentY = 0;
 
@@ -413,71 +380,51 @@
                 const results = handLandmarker.detectForVideo(video, startTimeMs);
 
                 if (results.landmarks.length > 0) {
-                    // Get Index Finger Tip (Landmark 8)
-                    const hand = results.landmarks[0];
-                    const indexTip = hand[8]; 
-                    
-                    // Map 0-1 video coords to Scene Coords
-                    // Video is mirrored via CSS, so we invert X logic
+                    const indexTip = results.landmarks[0][8]; 
+                    // Map video coords to 3D scene coords
                     targetX = (1 - indexTip.x) * 40 - 20; 
                     targetY = -(indexTip.y) * 30 + 15;
-                    
-                    // Visual feedback
-                    video.style.borderColor = "cyan";
+                    statusText.innerText = "Tracking Hand...";
+                    statusText.style.color = "cyan";
                 } else {
-                    video.style.borderColor = "rgba(255,255,255,0.2)";
-                    // If no hand, move interaction point away or let it be mouse
+                    statusText.innerText = "No hand detected (Use Mouse)";
+                    statusText.style.color = "#555";
                 }
             }
             requestAnimationFrame(predictWebcam);
         }
 
-        // --- MOUSE FALLBACK ---
+        // Mouse Fallback
         window.addEventListener('mousemove', (e) => {
-            // Only use mouse if hand is not detected (simple logic for now: always update target)
-            // In a pro app, you'd check a "handActive" flag.
-            // For this demo, let's allow mouse to override.
-            const x = (e.clientX / window.innerWidth) * 40 - 20;
-            const y = -(e.clientY / window.innerHeight) * 30 + 15;
-            
-            // Only override if we haven't seen a hand recently (optional complexity)
-            // For now, let's blend them or just use mouse.
-            // Comment out below lines if you want strictly camera only.
-            // targetX = x;
-            // targetY = y;
+            if(statusText.innerText.includes("No hand")) {
+                targetX = (e.clientX / window.innerWidth) * 40 - 20;
+                targetY = -(e.clientY / window.innerHeight) * 30 + 15;
+            }
         });
 
         // --- ANIMATION ---
         const clock = new THREE.Clock();
-
-        // GSAP for smooth animations (load from CDN)
-        import { gsap } from 'https://cdn.skypack.dev/gsap';
-
         function animate() {
             requestAnimationFrame(animate);
             const time = clock.getElapsedTime();
             
-            // 1. Update Uniforms
             material.uniforms.uTime.value = time;
             
-            // 2. Smooth Input (Lerp) - Crucial for Low Light stability
+            // Lerp for smooth movement
             currentX += (targetX - currentX) * 0.1;
             currentY += (targetY - currentY) * 0.1;
             
             material.uniforms.uMouse.value.set(currentX, currentY, 0);
-
-            // 3. Rotation
             particles.rotation.y = time * 0.05;
 
-            // 4. Render
             composer.render();
         }
 
-        // Init
-        createHandLandmarker();
-        animate();
+        // Bind Start Button
+        document.getElementById('start-btn').addEventListener('click', enableCam);
+        
+        animate(); // Start animation loop immediately (visuals work before cam)
 
-        // Resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
