@@ -3,352 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Kinetic - ULTRA FIX</title>
-    <style>
-        /* --- RESET & BASE --- */
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: sans-serif; }
-        canvas { display: block; }
-
-        /* --- UI LAYERS --- */
-        #start-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        #start-btn {
-            padding: 20px 50px; font-size: 24px; background: #00ffff; border: none;
-            cursor: pointer; font-weight: bold; border-radius: 50px;
-            box-shadow: 0 0 30px #00ffff; transition: transform 0.2s;
-        }
-        #start-btn:hover { transform: scale(1.1); }
-
-        #debug-console {
-            position: fixed; top: 0; right: 0; width: 300px; height: 100%;
-            background: rgba(0,0,0,0.8); color: #0f0; font-family: monospace;
-            padding: 20px; box-sizing: border-box; font-size: 12px;
-            overflow-y: auto; pointer-events: none; z-index: 100;
-            border-left: 1px solid #333; display: none; /* Hidden unless needed */
-        }
-        
-        #ui-layer { pointer-events: none; position: absolute; top: 20px; left: 20px; z-index: 10; }
-        .hud-box { 
-            pointer-events: auto; background: rgba(20,20,20,0.6); padding: 15px; 
-            border: 1px solid #444; border-radius: 8px; backdrop-filter: blur(5px);
-            color: white; margin-bottom: 10px; width: 200px;
-        }
-        button { 
-            background: #333; color: white; border: 1px solid #555; padding: 5px 10px; 
-            margin: 2px; cursor: pointer; width: 45%; 
-        }
-        button:hover { background: #00ffff; color: black; }
-        
-        #hand-cursor {
-            position: absolute; width: 20px; height: 20px; border: 2px solid red;
-            border-radius: 50%; transform: translate(-50%, -50%); z-index: 50; display: none;
-        }
-        .pinching { background: red; }
-        
-        /* Hidden Video */
-        #input-video { position: absolute; top: -1000px; left: -1000px; opacity: 0; }
-    </style>
-
+    <title>Neon Kinetic: Ultimate Edition</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <style>
+        /* --- CORE LAYOUT --- */
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', Courier, monospace; }
+        canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
+
+        /* --- START SCREEN (Essential for Camera Permissions) --- */
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(5, 5, 10, 0.95); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s;
+        }
+        .splash-title {
+            color: white; font-size: 3rem; letter-spacing: 5px; margin-bottom: 10px;
+            text-shadow: 0 0 20px #00ffff; text-transform: uppercase;
+        }
+        .splash-btn {
+            padding: 15px 40px; font-size: 1.2rem; background: transparent; color: #00ffff;
+            border: 2px solid #00ffff; cursor: pointer; text-transform: uppercase;
+            letter-spacing: 2px; transition: all 0.3s; font-weight: bold;
+            box-shadow: 0 0 15px rgba(0,255,255,0.2);
+        }
+        .splash-btn:hover { background: #00ffff; color: black; box-shadow: 0 0 40px #00ffff; }
+        .splash-info { color: #888; margin-top: 20px; font-size: 0.9rem; }
+
+        /* --- HUD UI (Fixed Layout) --- */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 10; padding: 20px; box-sizing: border-box;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        /* Top Bar */
+        .hud-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .logo { color: white; font-size: 1.5rem; border-left: 4px solid #00ffff; padding-left: 10px; }
+        .status-badge { 
+            background: rgba(0, 0, 0, 0.7); border: 1px solid #333; color: #00ffff; 
+            padding: 8px 15px; border-radius: 4px; font-size: 0.8rem;
+        }
+
+        /* Controls (Right Side) */
+        .controls-panel {
+            pointer-events: auto; align-self: flex-end;
+            background: rgba(10, 15, 20, 0.85); border: 1px solid rgba(0,255,255,0.3);
+            padding: 20px; border-radius: 8px; width: 220px;
+            backdrop-filter: blur(5px); margin-bottom: auto; margin-top: 50px;
+        }
+        .control-group h3 { color: #aaa; font-size: 0.8rem; margin: 0 0 10px 0; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .hud-btn {
+            background: rgba(255,255,255,0.05); border: 1px solid #444; color: #ddd;
+            padding: 8px; cursor: pointer; transition: 0.2s; font-family: inherit; font-size: 0.75rem;
+        }
+        .hud-btn:hover { border-color: #00ffff; color: white; }
+        .hud-btn.active { background: #00ffff; color: black; font-weight: bold; }
+
+        /* Bottom Bar */
+        .hud-footer { display: flex; align-items: flex-end; gap: 20px; }
+        .camera-feed {
+            width: 160px; height: 120px; background: #000; border: 1px solid #444;
+            transform: scaleX(-1); /* Mirror effect */
+            opacity: 0.8; border-radius: 4px; object-fit: cover;
+        }
+        .instruction-box { color: #666; font-size: 0.8rem; line-height: 1.5; }
+        .highlight { color: #00ffff; }
+
+        /* --- DEBUG CURSOR --- */
+        #hand-tracker {
+            position: absolute; width: 20px; height: 20px;
+            border: 2px solid #00ffff; border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none;
+            display: none; z-index: 50; box-shadow: 0 0 15px #00ffff;
+            transition: width 0.1s, height 0.1s, border-color 0.1s;
+        }
+        #hand-tracker.pinching {
+            width: 10px; height: 10px; background: #ff0055; border-color: #ff0055; box-shadow: 0 0 20px #ff0055;
+        }
+
+        /* Hidden raw video for AI processing */
+        #input-video { display: none; }
+    </style>
 </head>
 <body>
 
-    <div id="start-screen">
-        <h1 style="color:white; margin-bottom:20px;">NEON KINETIC</h1>
-        <button id="start-btn" onclick="startApp()">START EXPERIENCE</button>
-        <p style="color:#666; margin-top:20px;">Requires Camera Permission</p>
+    <div id="splash-screen">
+        <div class="splash-title">NEON KINETIC</div>
+        <button class="splash-btn" onclick="initializeSystem()">INITIALIZE SYSTEM</button>
+        <div class="splash-info">Requires Camera Access • Works with Gestures or Mouse</div>
     </div>
 
-    <div id="debug-console" id="logger"></div>
-
-    <div id="hand-cursor"></div>
-
     <div id="ui-layer">
-        <div class="hud-box">
-            <b>STATUS</b><br>
-            <span id="status-text">Waiting for Start...</span>
+        <div class="hud-header">
+            <div class="logo">
+                PARTICLE<br><span style="font-size:0.8em; opacity:0.7">ENGINE v9.0</span>
+            </div>
+            <div class="status-badge" id="system-status">SYSTEM STANDBY</div>
         </div>
-        <div class="hud-box">
-            <b>CONTROLS</b><br>
-            <div id="btn-container">
-                <button onclick="setShape('globe')">Globe</button>
-                <button onclick="setShape('heart')">Heart</button>
-                <button onclick="setShape('saturn')">Saturn</button>
-                <button onclick="setShape('helix')">Helix</button>
+
+        <div class="controls-panel">
+            <div class="control-group">
+                <h3>SHAPE MORPH</h3>
+                <div class="btn-grid">
+                    <button class="hud-btn active" onclick="setShape('globe')" id="btn-globe">GLOBE</button>
+                    <button class="hud-btn" onclick="setShape('heart')" id="btn-heart">HEART</button>
+                    <button class="hud-btn" onclick="setShape('saturn')" id="btn-saturn">SATURN</button>
+                    <button class="hud-btn" onclick="setShape('helix')" id="btn-helix">DNA</button>
+                    <button class="hud-btn" onclick="setShape('random')" id="btn-random">CHAOS</button>
+                </div>
+            </div>
+            <div class="control-group" style="margin-top:20px;">
+                <h3>VISUALS</h3>
+                <div class="btn-grid">
+                    <button class="hud-btn" onclick="toggleBloom(true)">GLOW ON</button>
+                    <button class="hud-btn" onclick="toggleBloom(false)">GLOW OFF</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="hud-footer">
+            <video id="feed-preview" class="camera-feed" autoplay muted playsinline></video>
+            <div class="instruction-box">
+                COMMANDS:<br>
+                1. <span class="highlight">OPEN HAND</span> to Attract Particles<br>
+                2. <span class="highlight">PINCH</span> to Explode/Repel
             </div>
         </div>
     </div>
 
-    <video id="input-video" playsinline></video>
-    <div id="canvas-container"></div>
-
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
+    <div id="hand-tracker"></div>
+    <video id="input-video" playsinline></video> <div id="canvas-container"></div>
 
     <script>
-        // --- CUSTOM LOGGER ---
-        function log(msg, type='info') {
-            const box = document.getElementById('debug-console');
-            // box.style.display = 'block'; // Uncomment to see logs always
-            const color = type === 'error' ? 'red' : '#0f0';
-            box.innerHTML += `<div style="color:${color}">> ${msg}</div>`;
-            console.log(msg);
-            
-            if(type === 'error') {
-                box.style.display = 'block';
-                alert("Error detected: " + msg);
-            }
-            
-            // Also update UI status
-            if(type !== 'error') document.getElementById('status-text').innerText = msg;
-        }
-    </script>
-
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-
-        // --- VARIABLES ---
-        let scene, camera, renderer, composer, particles, controls;
-        let positions, targetPositions;
-        let clock = new THREE.Clock();
-        
-        let handX = 0, handY = 0;
-        let isHandActive = false;
-        let isPinching = false;
-        let mouse = new THREE.Vector2();
-
-        // --- EXPOSE START FUNCTION ---
-        window.startApp = async function() {
-            document.getElementById('start-screen').style.display = 'none';
-            log("Starting Three.js...");
-            initThree();
-            log("Starting Camera & AI...");
-            initAI(); // Legacy non-module function
+        // --- GLOBAL BRIDGE VARIABLE ---
+        // This connects the AI (Script Tag) to Three.js (Module)
+        window.BRIDGE = {
+            handActive: false,
+            x: 0,
+            y: 0,
+            pinching: false,
+            setShape: null, // Three.js will fill this
+            setBloom: null  // Three.js will fill this
         };
 
-        window.setShape = function(type) {
-            calculateShape(type);
-        }
-
-        // --- THREE.JS INIT ---
-        function initThree() {
-            scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x000000, 0.02);
-
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
-            camera.position.z = 30;
-
-            renderer = new THREE.WebGLRenderer({ antialias: false });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-            // Post Processing
-            const renderPass = new RenderPass(scene, camera);
-            const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0;
-            bloomPass.strength = 1.5;
-            bloomPass.radius = 0.5;
-
-            composer = new EffectComposer(renderer);
-            composer.addPass(renderPass);
-            composer.addPass(bloomPass);
-
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.autoRotate = true;
-            controls.autoRotateSpeed = 0.5;
-
-            createParticles();
-            animate();
+        // --- BUTTON HANDLERS ---
+        function setShape(type) {
+            document.querySelectorAll('.hud-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById(`btn-${type}`);
+            if(btn) btn.classList.add('active');
             
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth/window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                composer.setSize(window.innerWidth, window.innerHeight);
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                mouse.x = (e.clientX/window.innerWidth)*2-1;
-                mouse.y = -(e.clientY/window.innerHeight)*2+1;
-            });
+            if(window.BRIDGE.setShape) window.BRIDGE.setShape(type);
         }
 
-        function createParticles() {
-            const count = 12000;
-            const geometry = new THREE.BufferGeometry();
-            positions = new Float32Array(count * 3);
-            targetPositions = new Float32Array(count * 3);
-            const colors = new Float32Array(count * 3);
-            const color = new THREE.Color();
-
-            for(let i=0; i<count; i++) {
-                positions[i*3] = (Math.random()-0.5)*50;
-                positions[i*3+1] = (Math.random()-0.5)*50;
-                positions[i*3+2] = (Math.random()-0.5)*50;
-                
-                color.setHSL(Math.random(), 0.8, 0.5);
-                colors[i*3] = color.r; colors[i*3+1] = color.g; colors[i*3+2] = color.b;
-            }
-
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-            // Texture
-            const cvs = document.createElement('canvas'); cvs.width=32; cvs.height=32;
-            const ctx = cvs.getContext('2d');
-            const g = ctx.createRadialGradient(16,16,0,16,16,16);
-            g.addColorStop(0,'white'); g.addColorStop(1,'transparent');
-            ctx.fillStyle = g; ctx.fillRect(0,0,32,32);
-            const tex = new THREE.CanvasTexture(cvs);
-
-            const material = new THREE.PointsMaterial({
-                size: 0.2, map: tex, vertexColors: true, 
-                blending: THREE.AdditiveBlending, depthWrite: false, transparent: true
-            });
-
-            particles = new THREE.Points(geometry, material);
-            scene.add(particles);
-            calculateShape('globe');
+        function toggleBloom(state) {
+            if(window.BRIDGE.setBloom) window.BRIDGE.setBloom(state);
         }
 
-        function calculateShape(type) {
-            const count = 12000;
-            for(let i=0; i<count; i++) {
-                const idx = i*3;
-                let x,y,z;
-                
-                if(type==='globe'){
-                    const phi = Math.acos(-1+(2*i)/count);
-                    const theta = Math.sqrt(count*Math.PI)*phi;
-                    x=10*Math.cos(theta)*Math.sin(phi);
-                    y=10*Math.sin(theta)*Math.sin(phi);
-                    z=10*Math.cos(phi);
-                } else if(type==='heart'){
-                    const t = i*0.1;
-                    x=16*Math.pow(Math.sin(t),3)*0.5;
-                    y=(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))*0.5;
-                    z=(Math.random()-0.5)*5;
-                } else if(type==='saturn'){
-                    if(i<count*0.7){
-                        const phi = Math.acos(-1+(2*i)/(count*0.7));
-                        const theta = Math.sqrt(count*0.7*Math.PI)*phi;
-                        x=6*Math.cos(theta)*Math.sin(phi);
-                        y=6*Math.sin(theta)*Math.sin(phi);
-                        z=6*Math.cos(phi);
-                    } else {
-                        const a = Math.random()*6.28; const r = 8+Math.random()*4;
-                        x=r*Math.cos(a); z=r*Math.sin(a); y=(Math.random()-0.5);
-                    }
-                } else {
-                    const t = i*0.05;
-                    x=5*Math.cos(t); z=5*Math.sin(t); y=(i*0.1)-10;
-                    if(i%2==0){x=5*Math.cos(t+3.14);z=5*Math.sin(t+3.14);}
-                }
-                
-                targetPositions[idx] = x;
-                targetPositions[idx+1] = y;
-                targetPositions[idx+2] = z;
-            }
+        async function initializeSystem() {
+            const splash = document.getElementById('splash-screen');
+            const status = document.getElementById('system-status');
+            splash.style.opacity = '0';
+            setTimeout(() => splash.style.display = 'none', 500);
+
+            status.innerText = "STARTING CAMERA...";
+            status.style.color = "yellow";
+
+            // 1. START CAMERA LOGIC
+            startCameraAI();
+
+            // 2. START VISUALS LOGIC (Three.js starts automatically via module below)
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            const time = clock.getElapsedTime();
-            const p = particles.geometry.attributes.position.array;
+        // --- CAMERA & AI LOGIC (Standard Script Scope) ---
+        async function startCameraAI() {
+            const videoInput = document.getElementById('input-video');
+            const videoPreview = document.getElementById('feed-preview');
+            const status = document.getElementById('system-status');
+            const tracker = document.getElementById('hand-tracker');
 
-            // Target Calc
-            let tx, ty;
-            if(isHandActive) {
-                tx = handX * 25; ty = handY * 25;
-            } else {
-                tx = mouse.x * 25; ty = mouse.y * 25;
-            }
-
-            for(let i=0; i<12000; i++) {
-                const idx = i*3;
-                let px = p[idx], py = p[idx+1], pz = p[idx+2];
-                
-                let targetX = targetPositions[idx];
-                let targetY = targetPositions[idx+1];
-                let targetZ = targetPositions[idx+2];
-
-                // Physics
-                const dx = px - tx; const dy = py - ty;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-
-                if(isPinching && dist < 15) {
-                    targetX += dx * 2; targetY += dy * 2; // Explode
-                } else if (!isPinching && dist < 10) {
-                    targetX -= dx * 0.1; targetY -= dy * 0.1; // Attract
-                }
-                
-                // Noise
-                targetX += Math.sin(time+i)*0.05;
-
-                p[idx] += (targetX - px) * 0.05;
-                p[idx+1] += (targetY - py) * 0.05;
-                p[idx+2] += (targetZ - pz) * 0.05;
-            }
-
-            particles.geometry.attributes.position.needsUpdate = true;
-            controls.update();
-            composer.render();
-        }
-
-        // --- GLOBAL AI UPDATE FUNCTION ---
-        // We expose this so the non-module script below can call it
-        window.updateHandStatus = function(x, y, active, pinching) {
-            handX = x; 
-            handY = y;
-            isHandActive = active;
-            isPinching = pinching;
-            
-            const cursor = document.getElementById('hand-cursor');
-            if(active) {
-                cursor.style.display = 'block';
-                // Convert back to 0-1 for CSS
-                const screenX = (x + 1) / 2;
-                const screenY = (-y + 1) / 2; // Flip Y back
-                cursor.style.left = (screenX*100)+'%';
-                cursor.style.top = (screenY*100)+'%';
-                
-                if(pinching) cursor.classList.add('pinching');
-                else cursor.classList.remove('pinching');
-                
-                document.getElementById('status-text').innerHTML = pinching ? "EXPLODING!" : "Attracting...";
-            } else {
-                cursor.style.display = 'none';
-                document.getElementById('status-text').innerText = "Scanning Hand...";
-            }
-        }
-    </script>
-
-    <script>
-        async function initAI() {
             try {
-                if(typeof window.Hands === 'undefined') {
-                    throw new Error("MediaPipe Hands library failed to load.");
+                // A. Check Libraries
+                if (!window.Hands || !window.Camera) {
+                    throw new Error("AI Libraries failed to load. Check Internet.");
                 }
 
-                const videoElement = document.getElementById('input-video');
-                
+                // B. Setup MediaPipe Hands
                 const hands = new Hands({locateFile: (file) => {
                     return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
                 }});
@@ -359,50 +205,288 @@
                     minTrackingConfidence: 0.5
                 });
 
-                hands.onResults(onResults);
+                hands.onResults((results) => {
+                    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                        const lm = results.multiHandLandmarks[0];
+                        
+                        // Process Coords (Mirror X)
+                        const rawX = 1 - lm[9].x; 
+                        const rawY = lm[9].y;
 
-                // Start Camera
-                const camera = new Camera(videoElement, {
+                        // Pinch Detection
+                        const pinchDist = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
+                        const isPinching = pinchDist < 0.05;
+
+                        // Update Bridge
+                        window.BRIDGE.handActive = true;
+                        // Map 0..1 to -1..1 for Three.js
+                        window.BRIDGE.x = (rawX * 2) - 1;
+                        window.BRIDGE.y = -(rawY * 2) + 1; // Flip Y for 3D
+                        window.BRIDGE.pinching = isPinching;
+
+                        // Update Visual Tracker
+                        tracker.style.display = 'block';
+                        tracker.style.left = (rawX * 100) + '%';
+                        tracker.style.top = (rawY * 100) + '%';
+                        
+                        if(isPinching) {
+                            tracker.classList.add('pinching');
+                            status.innerText = "GESTURE: EXPLODE";
+                            status.style.color = "#ff0055";
+                        } else {
+                            tracker.classList.remove('pinching');
+                            status.innerText = "GESTURE: ATTRACT";
+                            status.style.color = "#00ffff";
+                        }
+
+                    } else {
+                        window.BRIDGE.handActive = false;
+                        tracker.style.display = 'none';
+                        status.innerText = "SCANNING FOR HAND...";
+                        status.style.color = "#888";
+                    }
+                });
+
+                // C. Start Camera
+                const camera = new Camera(videoInput, {
                     onFrame: async () => {
-                        await hands.send({image: videoElement});
+                        await hands.send({image: videoInput});
                     },
                     width: 640,
                     height: 480
                 });
-                
-                log("Requesting Camera Access...");
-                await camera.start();
-                log("Camera Active. Looking for hands...");
 
-            } catch(e) {
-                log(e.message, 'error');
+                await camera.start();
+                
+                // Link preview video
+                const stream = videoInput.srcObject;
+                if(stream) {
+                    videoPreview.srcObject = stream;
+                }
+
+            } catch (e) {
+                console.error(e);
+                status.innerText = "CAMERA FAILED - MOUSE MODE";
+                status.style.color = "red";
+                alert("Camera Error: " + e.message + ". Visuals will work with mouse.");
+            }
+        }
+    </script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // --- CONFIG ---
+        const PARTICLE_COUNT = 15000;
+        const INTERACTION_AREA = 25;
+        
+        let scene, camera, renderer, composer, particles;
+        let positions, targetPositions;
+        let clock = new THREE.Clock();
+        let mouse = new THREE.Vector2();
+
+        init();
+        animate();
+
+        function init() {
+            // Setup Bridge Functions
+            window.BRIDGE.setShape = calculateShape;
+            window.BRIDGE.setBloom = (enabled) => {
+                composer.passes[1].enabled = enabled;
+            };
+
+            // Scene
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.02);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera.position.z = 30;
+
+            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Post Proc
+            const renderPass = new RenderPass(scene, camera);
+            const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+            bloomPass.threshold = 0;
+            bloomPass.strength = 1.2;
+            bloomPass.radius = 0.5;
+
+            composer = new EffectComposer(renderer);
+            composer.addPass(renderPass);
+            composer.addPass(bloomPass);
+
+            // Controls
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.5;
+
+            createParticles();
+
+            // Resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth/window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                composer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            // Mouse Move
+            document.addEventListener('mousemove', (e) => {
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            });
+        }
+
+        function createParticles() {
+            const geometry = new THREE.BufferGeometry();
+            positions = new Float32Array(PARTICLE_COUNT * 3);
+            targetPositions = new Float32Array(PARTICLE_COUNT * 3);
+            const colors = new Float32Array(PARTICLE_COUNT * 3);
+            const color = new THREE.Color();
+
+            for(let i=0; i<PARTICLE_COUNT; i++) {
+                positions[i*3] = (Math.random()-0.5)*50;
+                positions[i*3+1] = (Math.random()-0.5)*50;
+                positions[i*3+2] = (Math.random()-0.5)*50;
+
+                color.setHSL(Math.random(), 0.8, 0.6);
+                colors[i*3] = color.r; colors[i*3+1] = color.g; colors[i*3+2] = color.b;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            // Texture
+            const cvs = document.createElement('canvas'); cvs.width=32; cvs.height=32;
+            const ctx = cvs.getContext('2d');
+            const gr = ctx.createRadialGradient(16,16,0,16,16,16);
+            gr.addColorStop(0,'rgba(255,255,255,1)');
+            gr.addColorStop(0.5,'rgba(0,255,255,0.5)');
+            gr.addColorStop(1,'rgba(0,0,0,0)');
+            ctx.fillStyle = gr; ctx.fillRect(0,0,32,32);
+            const tex = new THREE.CanvasTexture(cvs);
+
+            const material = new THREE.PointsMaterial({
+                size: 0.2, map: tex, vertexColors: true,
+                blending: THREE.AdditiveBlending, depthWrite: false, transparent: true
+            });
+
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+            calculateShape('globe');
+        }
+
+        function calculateShape(type) {
+            for(let i=0; i<PARTICLE_COUNT; i++) {
+                const idx = i*3;
+                let x,y,z;
+
+                if(type === 'globe') {
+                    const phi = Math.acos(-1 + (2*i)/PARTICLE_COUNT);
+                    const theta = Math.sqrt(PARTICLE_COUNT * Math.PI) * phi;
+                    x = 10 * Math.cos(theta) * Math.sin(phi);
+                    y = 10 * Math.sin(theta) * Math.sin(phi);
+                    z = 10 * Math.cos(phi);
+                } else if(type === 'heart') {
+                     const t = i*0.1;
+                     x = 16 * Math.pow(Math.sin(t), 3) * 0.5;
+                     y = (13 * Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t)) * 0.5;
+                     z = (Math.random()-0.5)*5;
+                } else if(type === 'saturn') {
+                    if(i<PARTICLE_COUNT*0.7) {
+                        const phi = Math.acos(-1 + (2*i)/(PARTICLE_COUNT*0.7));
+                        const theta = Math.sqrt(PARTICLE_COUNT*0.7 * Math.PI) * phi;
+                        x=6*Math.cos(theta)*Math.sin(phi); y=6*Math.sin(theta)*Math.sin(phi); z=6*Math.cos(phi);
+                    } else {
+                        const a = Math.random()*6.28; const r = 8+Math.random()*4;
+                        x=r*Math.cos(a); z=r*Math.sin(a); y=(Math.random()-0.5);
+                    }
+                } else if(type === 'helix') {
+                    const t = i*0.05;
+                    x=5*Math.cos(t); z=5*Math.sin(t); y=(i*0.1)-10;
+                    if(i%2==0){x=5*Math.cos(t+3.14);z=5*Math.sin(t+3.14);}
+                } else {
+                    x=(Math.random()-0.5)*40; y=(Math.random()-0.5)*40; z=(Math.random()-0.5)*40;
+                }
+
+                targetPositions[idx] = x;
+                targetPositions[idx+1] = y;
+                targetPositions[idx+2] = z;
             }
         }
 
-        function onResults(results) {
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                const lm = results.multiHandLandmarks[0];
-                
-                // Index 9 is palm center
-                const rawX = 1 - lm[9].x; // Mirror
-                const rawY = 1 - lm[9].y; // Flip Y
-                
-                // Map to -1 to 1 for Three.js
-                const x = (rawX * 2) - 1;
-                const y = (rawY * 2) - 1; // Correct 3D space Y
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
 
-                // Pinch: 4 (thumb) vs 8 (index)
-                const d = Math.sqrt(
-                    Math.pow(lm[4].x - lm[8].x, 2) + 
-                    Math.pow(lm[4].y - lm[8].y, 2)
-                );
-                const pinching = d < 0.05;
+            // Determine Target (Hand OR Mouse)
+            let tx, ty;
+            const isHand = window.BRIDGE.handActive;
+            const isPinch = window.BRIDGE.pinching;
 
-                // Send to Three.js module
-                window.updateHandStatus(x, y, true, pinching);
+            if(isHand) {
+                tx = window.BRIDGE.x * 20;
+                ty = window.BRIDGE.y * 20;
             } else {
-                window.updateHandStatus(0, 0, false, false);
+                tx = mouse.x * 20;
+                ty = mouse.y * 20;
             }
+
+            const p = particles.geometry.attributes.position.array;
+
+            for(let i=0; i<PARTICLE_COUNT; i++) {
+                const idx = i*3;
+                let px = p[idx], py = p[idx+1], pz = p[idx+2];
+                
+                let targetX = targetPositions[idx];
+                let targetY = targetPositions[idx+1];
+                let targetZ = targetPositions[idx+2];
+
+                // Interaction
+                const dx = px - tx;
+                const dy = py - ty;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                if(isPinch && dist < 15) {
+                    // Explode
+                    const force = (15 - dist) * 0.2;
+                    targetX += dx * force; 
+                    targetY += dy * force;
+                    targetZ += (Math.random()-0.5)*5;
+                } else if (!isPinch && dist < 10) {
+                    // Attract
+                    targetX -= dx * 0.05;
+                    targetY -= dy * 0.05;
+                }
+
+                // Noise
+                targetX += Math.sin(time + i) * 0.05;
+                
+                // Update
+                p[idx] += (targetX - px) * 0.05;
+                p[idx+1] += (targetY - py) * 0.05;
+                p[idx+2] += (targetZ - pz) * 0.05;
+            }
+
+            particles.geometry.attributes.position.needsUpdate = true;
+            composer.render();
         }
     </script>
 </body>
