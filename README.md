@@ -1,94 +1,66 @@
-# ⚛️ Particle Core: The Holographic Gesture Engine
+<div align="center">
 
-> **"Minority Report meets the Browser."**
-> A real-time, interactive 3D particle system controlled entirely by your hand gestures.
+  # ⚛️ HOLOFLUX
+  **The "Minority Report" Interface for the Web**
 
-![Three.js](https://img.shields.io/badge/Three.js-Black?style=for-the-badge&logo=three.js&logoColor=white)
-![MediaPipe](https://img.shields.io/badge/MediaPipe-00aabb?style=for-the-badge&logo=google&logoColor=white)
-![WebGL](https://img.shields.io/badge/WebGL-GLSL-red?style=for-the-badge)
+  [![Three.js](https://img.shields.io/badge/Three.js-Black?style=for-the-badge&logo=three.js&logoColor=white)](https://threejs.org/)
+  [![MediaPipe](https://img.shields.io/badge/MediaPipe-Vision-00aabb?style=for-the-badge&logo=google&logoColor=white)](https://developers.google.com/mediapipe)
+  [![WebGL](https://img.shields.io/badge/WebGL-GLSL-red?style=for-the-badge&logo=opengl&logoColor=white)](https://get.webgl.org/)
+  [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-## 🌌 What is this?
-**Particle Core** is an advanced web experiment that combines **Computer Vision** (MediaPipe) with **High-Performance WebGL** (Three.js + GLSL Shaders). 
+  <br />
 
-It generates **55,000+ individual particles** that form complex 3D shapes (Globes, Hearts, Galaxies). Using your webcam, it detects your hand structure in real-time, allowing you to manipulate physics, destroy objects, and freeze time—just like Iron Man's holographic interface.
+  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDdtY3h6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6Y2t6&ep=v1_gifs_search&rid=giphy.gif" alt="Demo GIF" width="100%" style="border-radius: 10px; box-shadow: 0 0 20px rgba(0,255,255,0.2);">
 
-## ✨ Key Features
+  <br />
+  <br />
 
-* **🖐️ AI Hand Tracking:** Zero-latency tracking of finger joints using Google's MediaPipe.
-* **⚡ 55k+ GPU Particles:** Entirely rendered via custom **GLSL Vertex Shaders**. No CPU lag.
-* **🌓 Low-Light Optimized:** Uses "Lerp" smoothing algorithms to work perfectly even in dark rooms.
-* **💎 Bloom & Post-Processing:** Cinematic glow effects using UnrealBloomPass.
-* **🧠 Smart State Machine:** Distinguishes between pointing, grabbing, and pinching automatically.
+  <h3>
+    <a href="https://YOUR-VERCEL-URL.vercel.app">🔴 LIVE DEMO</a>
+    <span> | </span>
+    <a href="https://github.com/YOUR-USERNAME/holoflux-gesture-engine/issues">🐛 Report Bug</a>
+  </h3>
+</div>
 
 ---
 
-## 🎮 The Gesture Guide (God Mode)
+## 🔮 What is Holoflux?
 
-The system includes a **Gesture Recognition Engine**. Use these hand signs to control the physics:
+**Holoflux** is an experimental WebGL interface that bridges the gap between **Computer Vision** and **High-Performance Graphics**. 
 
-| Gesture | Action | Effect |
+It renders **55,000 interactive particles** that react to your physical hand movements in real-time. By combining Google's MediaPipe (for skeletal tracking) with custom GLSL Shaders (for physics), Holoflux achieves a "God Mode" experience where you can physically grasp, explode, and freeze digital matter directly in your browser.
+
+> **"Any sufficiently advanced technology is indistinguishable from magic."** — *Arthur C. Clarke*
+
+## ✨ Features
+
+* **🧠 AI Skeletal Tracking:** Zero-latency hand recognition using MediaPipe.
+* **⚡ 55k+ GPU Particles:** A custom Vertex Shader handles millions of physics calculations per frame with zero CPU lag.
+* **🕸️ State Machine Engine:** Intelligently distinguishes between complex gestures (Pinch vs. Fist vs. Palm).
+* **🌑 Low-Light Capable:** Uses Lerp (Linear Interpolation) smoothing algorithms to filter out webcam noise in dark environments.
+* **💎 Cinematic Post-Processing:** Integrated UnrealBloomPass for that neon, sci-fi aesthetic.
+
+---
+
+## 🖐️ The Gesture Guide
+
+This system uses a custom **"Iron Man"** interaction model. Use these hand signs to control the physics engine:
+
+| Gesture | Action | Visual Effect |
 | :--- | :--- | :--- |
-| **☝️ Point** | **Interact** | Gently swirl particles like water. |
-| **🖐️ Open Palm** | **DESTROY** | A violent shockwave scatters particles outward. (Includes turbulence noise). |
-| **✊ Closed Fist** | **REBUILD** | Creates a massive Black Hole gravity well that sucks particles back together. |
-| **👌 Pinch** | **FREEZE** | **"Matrix Mode"**. Stops time and freezes the explosion in mid-air. |
-| **✌️ Peace** | **MORPH** | Cycles to the next 3D template (Sphere → Heart → Saturn → Galaxy). |
+| **🖐️ Open Palm** | **EXPLODE** | A violent shockwave scatters particles outward with turbulence noise. |
+| **✊ Closed Fist** | **IMPLODE** | Generates a massive gravity well (Black Hole) that reconstructs the shape. |
+| **👌 Pinch** | **FREEZE** | **"Matrix Mode."** Instantly stops time and freezes particles in mid-air. |
+| **✌️ Peace Sign** | **MORPH** | Cycles the geometry: `Sphere` → `Heart` → `Saturn` → `Galaxy`. |
+| **☝️ Point** | **SWIRL** | Standard interaction. Gently displace particles like water. |
 
 ---
 
 ## 🚀 Quick Start
 
-This project is a **single-file masterpiece**. You don't need a complex build step.
+This project is built as a **Single File Experience** to demonstrate the power of raw WebGL without build-step complexity.
 
-### Option 1: The Easy Way (Vercel/Netlify)
-1.  Upload `index.html` to a GitHub repository.
-2.  Connect it to Vercel.
-3.  **Done.** (Camera access requires HTTPS, which Vercel provides automatically).
-
-### Option 2: Local Development
-1.  Clone this repo:
-    ```bash
-    git clone [https://github.com/your-username/particle-core-hologram.git](https://github.com/your-username/particle-core-hologram.git)
-    ```
-2.  You **cannot** just double-click `index.html` (Camera permissions block local file access). You must run a local server.
-3.  If you have Python installed:
-    ```bash
-    python3 -m http.server
-    ```
-4.  Open `http://localhost:8000`.
-
----
-
-## 🧠 How it Works (Under the Hood)
-
-### 1. The Physics (GLSL Shaders)
-We do not calculate the position of 55,000 particles in JavaScript (that would be too slow). Instead, we pass the **Hand Coordinates** to the GPU as a "Uniform". The GPU then runs a physics calculation on *every single pixel simultaneously* using a custom Vertex Shader.
-
-### 2. The Vision (MediaPipe)
-We use the `HandLandmarker` task to extract 21 skeletal points from your video feed.
-* **Fist Detection:** We calculate the Euclidean distance between fingertips and the wrist.
-* **Pinch Detection:** We calculate the distance between the Index Tip and Thumb Tip.
-
-### 3. The Smoother (Linear Interpolation)
-Webcams are jittery. We use a **Lerp (Linear Interpolation)** function:
-`currentX += (targetX - currentX) * 0.1`
-This ensures the hologram movement feels "heavy" and smooth, rather than shaky.
-
----
-
-## 🛠️ Technologies Used
-* **Three.js** - 3D Engine
-* **Google MediaPipe** - AI Computer Vision
-* **GLSL** - Custom Shader Language
-* **GSAP** - Animation transitions
-
----
-
-## 📜 License
-MIT License. Feel free to fork, modify, and create your own JARVIS interface.
-
----
-
-<p align="center">
-  <b>🌟 Star this repo if it made you feel like Tony Stark! 🌟</b>
-</p>
+### 1. Clone
+```bash
+git clone [https://github.com/your-username/holoflux-gesture-engine.git](https://github.com/your-username/holoflux-gesture-engine.git)
+cd holoflux-gesture-engine
